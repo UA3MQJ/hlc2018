@@ -31,6 +31,8 @@ defmodule HttpTest2.Mixfile do
     [{:plug, "~>1.3.4"},
      # {:plug_cowboy, "~>1.0"},
      {:cowboy, "~>1.1.2"},
+     {:poison, "~> 2.0"},
+     {:eljiffy, "~> 1.1.0"},
      {:distillery, "~> 1.0"}]
   end
 end

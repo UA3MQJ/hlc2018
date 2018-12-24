@@ -1,19 +1,24 @@
 # elx_small_http_cowboy
 
-Minimal HTTP server for stress tests
+создать образ
 
-Build:
-> mix deps.get
+ docker build -t elixir .
 
-Build with HiPE:
-> remove all files from _build
+подключиться и зайти в него
 
-> ERL_COMPILER_OPTIONS="[native,{hipe, [verbose, o3]}]" mix deps.compile --force
+ docker run -i -t <id контейнера> /bin/bash
 
-> ERL_COMPILER_OPTIONS="[native,{hipe, [verbose, o3]}]" mix compile
+запустить
 
+ docker run --rm -p 8080:8080 -t elixir
 
-Start:
+Загрузить
 
-> mix run --no-halt
+docker tag elixir stor.highloadcup.ru/accounts/axolotl_shooter
+docker push stor.highloadcup.ru/accounts/axolotl_shooter
+
  
+ немного тестовых методов
+ 
+curl --header "Content-Type: application/json"   --reque POST   --data '{"country": "Индезия", "city": "Роттероштадт"}'   http://localhost:8080/accounts/7313/?query_id=500
+
