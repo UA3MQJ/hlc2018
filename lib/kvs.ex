@@ -81,8 +81,8 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    # :observer.start()
-    # :timer.sleep(5000)
+    :observer.start()
+    :timer.sleep(5000)
 
     accounts_fields  = Keyword.keys(accounts(accounts()))
     # Logger.info ">>> accounts_fields=#{inspect accounts_fields}"
@@ -210,32 +210,45 @@ defmodule HttpTest2.KVS do
   end
   def operate_file_list([head|tail], obj_name) do
     # read_file_jiffy(head, obj_name)
-    read_file_jaxon(head, obj_name)
+    read_file_jaxon_stream(head, obj_name)
+    # read_file_jaxon_streamflow(head, obj_name)
 
     :erlang.garbage_collect(self())
 
     operate_file_list(tail, obj_name)
   end
 
-# file_name |> File.stream!()|> Jaxon.Stream.query([:root, "accounts", :all]) |> Enum.to_list()
+  def read_file_jaxon_stream(file_name, obj_name) do
+    # Logger.info ">>> file_name=#{inspect file_name} obj_name=#{inspect obj_name}"
+    time1 = :os.system_time(:millisecond)
+    file_name
+    |> File.stream!([], 900)
+    |> Jaxon.Stream.query([:root, obj_name, :all])
+    |> Enum.map(fn(user) ->
+      # Logger.debug ">>> user=#{inspect user}"
+      account_set(user)
+    end)
 
-  def read_file_jaxon(file_name, obj_name) do
+    time2 = :os.system_time(:millisecond)
+    Logger.info ">>> file_name=#{inspect file_name} stream load #{time2 - time1} ms"
+    :erlang.garbage_collect(self())
+  end
+
+  def read_file_jaxon_streamflow(file_name, obj_name) do
     # Logger.info ">>> file_name=#{inspect file_name} obj_name=#{inspect obj_name}"
     time1 = :os.system_time(:millisecond)
     file_name
     |> File.stream!([], 900)
     |> Jaxon.Stream.query([:root, obj_name, :all])
     |> Flow.from_enumerable()
-    # |> Flow.partition()
     |> Flow.map(fn(user) ->
       # Logger.debug ">>> user=#{inspect user}"
       account_set(user)
     end)
-    # |> Flow.partition()
     |> Flow.run()
 
     time2 = :os.system_time(:millisecond)
-    Logger.info ">>> file_name=#{inspect file_name} load #{time2 - time1} ms"
+    Logger.info ">>> file_name=#{inspect file_name} stream+flow load #{time2 - time1} ms"
     :erlang.garbage_collect(self())
   end
 
