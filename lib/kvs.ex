@@ -209,16 +209,33 @@ defmodule HttpTest2.KVS do
     :erlang.garbage_collect(self())
   end
   def operate_file_list([head|tail], obj_name) do
-    read_file(head, obj_name)
+    # read_file_jiffy(head, obj_name)
+    read_file_jaxon(head, obj_name)
+
     :erlang.garbage_collect(self())
 
     operate_file_list(tail, obj_name)
   end
 
+# file_name |> File.stream!()|> Jaxon.Stream.query([:root, "accounts", :all]) |> Enum.to_list()
 
+  def read_file_jaxon(file_name, obj_name) do
+    # Logger.info ">>> file_name=#{inspect file_name} obj_name=#{inspect obj_name}"
+    time1 = :os.system_time(:millisecond)
+    file_name
+    |> File.stream!([], 900)
+    |> Jaxon.Stream.query([:root, obj_name, :all])
+    |> Enum.map(fn(user) ->
+      # Logger.debug ">>> user=#{inspect user}"
+      account_set(user)
+    end)
+    time2 = :os.system_time(:millisecond)
+    Logger.info ">>> file_name=#{inspect file_name} load #{time2 - time1} ms"
+    :erlang.garbage_collect(self())
+  end
 
   # read and json decode
-  def read_file(file_name, obj_name) do
+  def read_file_jiffy(file_name, obj_name) do
     # Logger.info ">>> file_name=#{inspect file_name}"
     time1 = :os.system_time(:millisecond)
     file_data = File.read!(file_name)
