@@ -4,7 +4,7 @@ defmodule Http_test2.Router do
 
   use Plug.Router
   require Logger
-
+  alias HttpTest2.KVS
 
   plug Plug.Parsers, parsers: [:urlencoded, :multipart, :json],
                      pass:  ["*/*"],
@@ -13,28 +13,52 @@ defmodule Http_test2.Router do
   plug(:match)
   plug(:dispatch)
 
-  get "/" do
-    send_resp(conn, 200, "Hi there, I love !")
+
+  post "/accounts/new/" do
+    _params = conn.params
+    body = conn.body_params
+    # Logger.debug ">>>> params=#{inspect params}"
+    # Logger.debug ">>>> body=#{inspect body}"
+
+    case KVS.account_new(body) do
+      :ok -> send_resp(conn, 201, "{}")
+      :error -> send_resp(conn, 400, "")
+    end
   end
 
-  get "/:key" do
-    send_resp(conn, 200, "Hi there, I love " <> key <> "!")
+  post "/accounts/likes/" do
+    _params = conn.params
+    body = conn.body_params
+    # Logger.debug ">>>> params=#{inspect params}"
+    # Logger.debug ">>>> body=#{inspect body}"
+
+    case KVS.account_set_likes(body) do
+      :ok -> send_resp(conn, 202, "{}")
+      :error -> send_resp(conn, 400, "")
+    end
   end
 
   post "/accounts/:id/" do
-    params = conn.params
+    _params = conn.params
     body = conn.body_params
-    {int_id, ""} = Integer.parse(id)
-    # Logger.debug ">>>> id=#{inspect id}"
-    # Logger.debug ">>>> int_id=#{inspect int_id}"
-    # Logger.debug ">>>> params=#{inspect params}"
-    # Logger.debug ">>>> body=#{inspect body}"
-    # send_resp(conn, 200, "Hi there, I love " <> key <> "!")
-
-    case HttpTest2.KVS.account_update(int_id, body) do
-      :ok -> send_resp(conn, 202, "{}")
-      :error_id -> send_resp(conn, 400, "{}")
+    case Integer.parse(id) do
+      :error ->
+        send_resp(conn, 404, "")
+      {int_id, _} ->
+        case KVS.account_update(int_id, body) do
+          :ok -> send_resp(conn, 202, "{}")
+          :error -> send_resp(conn, 400, "")
+          :error_id -> send_resp(conn, 404, "")
+        end
     end
+  end
+
+  post "/test/:id/" do
+    send_resp(conn, 202, "{id:#{id}}")
+  end
+
+  match _ do
+    send_resp(conn, 404, "")
   end
 
 end
