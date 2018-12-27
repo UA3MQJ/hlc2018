@@ -81,8 +81,8 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    :observer.start()
-    :timer.sleep(5000)
+    # :observer.start()
+    # :timer.sleep(5000)
 
     accounts_fields  = Keyword.keys(accounts(accounts()))
     # Logger.info ">>> accounts_fields=#{inspect accounts_fields}"
@@ -225,10 +225,15 @@ defmodule HttpTest2.KVS do
     file_name
     |> File.stream!([], 900)
     |> Jaxon.Stream.query([:root, obj_name, :all])
-    |> Enum.map(fn(user) ->
+    |> Flow.from_enumerable()
+    # |> Flow.partition()
+    |> Flow.map(fn(user) ->
       # Logger.debug ">>> user=#{inspect user}"
       account_set(user)
     end)
+    # |> Flow.partition()
+    |> Flow.run()
+
     time2 = :os.system_time(:millisecond)
     Logger.info ">>> file_name=#{inspect file_name} load #{time2 - time1} ms"
     :erlang.garbage_collect(self())

@@ -34,6 +34,7 @@ defmodule HttpTest2.Mixfile do
      {:poison, "~> 2.0"},
      {:eljiffy, "~> 1.1.0"},
      {:jaxon, "~> 1.0"},
-     {:distillery, "~> 1.0"}]
+     {:flow, "~> 0.14"},
+     {:distillery, "~> 1.0"},]
   end
 end
