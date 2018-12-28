@@ -74,15 +74,15 @@ defmodule HttpTest2.KVS do
   end
 
   def init(_) do
-    Logger.info ">>> KVS init"
+    Logger.info ">>> KVS init * jaxon + stream + flow * readonly"
     send(self(), :init)
     {:ok, nil}
   end
 
   # delayed init
   def handle_info(:init, _state) do
-    :observer.start()
-    :timer.sleep(5000)
+    # :observer.start()
+    # :timer.sleep(5000)
 
     accounts_fields  = Keyword.keys(accounts(accounts()))
     # Logger.info ">>> accounts_fields=#{inspect accounts_fields}"
@@ -167,7 +167,7 @@ defmodule HttpTest2.KVS do
 
     time1 = :os.system_time(:millisecond)
     # accounts = read_file_async("accounts")
-    read_file_sync("accounts")
+    read_file_sync2("accounts")
     time2 = :os.system_time(:millisecond)
     Logger.info ">>> read_file #{time2 - time1} ms"
 
@@ -197,6 +197,64 @@ defmodule HttpTest2.KVS do
     #   :erlang.garbage_collect(pid)
     # end)
 
+  def read_file_sync2(file) do
+    priv_path =  "priv/data"
+    file_list = Path.wildcard("#{priv_path}/#{file}_*.json") # read()
+
+    # Logger.debug ">>>> file_list=#{inspect file_list}"
+
+    time10 = :os.system_time(:millisecond)
+
+    file_list
+    |> Enum.map(fn(file_name) ->
+      Task.async(fn() ->
+        time1 = :os.system_time(:millisecond)
+        
+        file_name
+        |> File.stream!([], 1000)
+        |> Jaxon.Stream.query([:root, "accounts", :all])
+        |> Enum.map(fn(user) ->
+          # Logger.debug ">>> user=#{inspect user}"
+          account_set(user)
+          # :ok
+        end) 
+
+        time2 = :os.system_time(:millisecond)
+        Logger.debug ">>> file read #{time2 - time1} ms"
+      end)
+    end)
+    |> Enum.map(fn(ref) ->
+      Task.await(ref, 90000)
+    end)
+
+    time20 = :os.system_time(:millisecond)
+    Logger.debug ">>> async/await read #{time20 - time10} ms"
+
+    # чтение файла кусками
+    # file_name
+    # |> File.stream!([], 1000)
+    # |> Jaxon.Stream.query([:root, obj_name, :all])
+    # |> Enum.map(fn(user) ->
+    #   # Logger.debug ">>> user=#{inspect user}"
+    #   # account_set(user)
+    #   :ok
+    # end)
+
+    # чтение файла кусками через flow
+    # file_name
+    # |> File.stream!([], 900)
+    # |> Jaxon.Stream.query([:root, obj_name, :all])
+    # |> Flow.from_enumerable()
+    # |> Flow.map(fn(user) ->
+    #   # Logger.debug ">>> user=#{inspect user}"
+    #   # account_set(user)
+    #   :ok
+    # end)
+    # |> Flow.run()    
+
+
+  end
+
 
   def read_file_sync(file) do
     priv_path =  "priv/data"
@@ -210,8 +268,8 @@ defmodule HttpTest2.KVS do
   end
   def operate_file_list([head|tail], obj_name) do
     # read_file_jiffy(head, obj_name)
-    read_file_jaxon_stream(head, obj_name)
-    # read_file_jaxon_streamflow(head, obj_name)
+    # read_file_jaxon_stream(head, obj_name)
+    read_file_jaxon_streamflow(head, obj_name)
 
     :erlang.garbage_collect(self())
 
@@ -222,11 +280,12 @@ defmodule HttpTest2.KVS do
     # Logger.info ">>> file_name=#{inspect file_name} obj_name=#{inspect obj_name}"
     time1 = :os.system_time(:millisecond)
     file_name
-    |> File.stream!([], 900)
+    |> File.stream!([], 1000)
     |> Jaxon.Stream.query([:root, obj_name, :all])
     |> Enum.map(fn(user) ->
       # Logger.debug ">>> user=#{inspect user}"
-      account_set(user)
+      # account_set(user)
+      :ok
     end)
 
     time2 = :os.system_time(:millisecond)
@@ -243,7 +302,8 @@ defmodule HttpTest2.KVS do
     |> Flow.from_enumerable()
     |> Flow.map(fn(user) ->
       # Logger.debug ">>> user=#{inspect user}"
-      account_set(user)
+      # account_set(user)
+      :ok
     end)
     |> Flow.run()
 
