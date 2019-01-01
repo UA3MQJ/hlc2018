@@ -35,6 +35,8 @@ defmodule HttpTest2.Mixfile do
      {:eljiffy, "~> 1.1.0"},
      {:jaxon, "~> 1.0"},
      {:flow, "~> 0.14"},
-     {:distillery, "~> 1.0"},]
+     {:distillery, "~> 1.0"},
+     {:exprof, "~> 0.2.3"},
+    ]
   end
 end

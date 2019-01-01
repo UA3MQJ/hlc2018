@@ -112,3 +112,14 @@ curl --header "Content-Type: application/json"   --reque POST   --data '{
   "premium": "nasacanrig",
   "sname": "Фаатоина"
 }'   http://localhost:8080/accounts/7313/?query_id=500 -v
+
+HttpTest2.KVS.get_user(1)
+:mnesia.dirty_read({:accounts, 1})
+:mnesia.dirty_read({:countrys, 1})
+:mnesia.dirty_read({:accounts, 4}) |> hd |> HttpTest2.KVS.account_to_map()
+new_city_id = :mnesia.dirty_update_counter(:autoinc, :citys, 1)
+
+import ExProf.Macro
+profile do HttpTest2.KVS.read_file_sync2("accounts") end
+profile do HttpTest2.KVS.get_user(1) end
+
