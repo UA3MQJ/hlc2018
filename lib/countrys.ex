@@ -17,6 +17,10 @@ defmodule HttpTest2.Countrys do
     GenServer.call(__MODULE__, {:get_id, name})
   end
 
+  def get_trie() do
+    GenServer.call(__MODULE__, :get_trie)
+  end
+
   def handle_call({:get_id, name}, _, {new_id, trie} = state) do
     case Retrieval.contains?(trie, name) do
       false ->
@@ -26,5 +30,8 @@ defmodule HttpTest2.Countrys do
     end
   end
 
-
+  def handle_call(:get_trie, _, {new_id, trie} = state) do
+    {:reply, trie, state}
+  end
+  
 end

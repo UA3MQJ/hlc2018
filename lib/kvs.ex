@@ -7,6 +7,7 @@ defmodule HttpTest2.KVS do
   alias HttpTest2.Countrys
   alias HttpTest2.Phones
   alias HttpTest2.Emails
+  alias HttpTest2.Interests
 
   Record.defrecord :accounts, [
     :id,        # - уникальный внешний идентификатор пользователя. 
@@ -92,6 +93,8 @@ defmodule HttpTest2.KVS do
     :ets.new(:countrys, [:named_table, :public, :set, {:keypos, 1}])
     :ets.new(:emails, [:named_table, :public, :set, {:keypos, 1}])
     :ets.new(:phones, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:interests, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:likes, [:named_table, :public, :bag])
   end
 
 
@@ -106,7 +109,7 @@ defmodule HttpTest2.KVS do
     time10 = :os.system_time(:millisecond)
 
     file_list
-    |> Flow.from_enumerable(stages: 13, max_demand: 1)
+    |> Flow.from_enumerable(stages: 8, max_demand: 1)
     |> Flow.flat_map(fn(file_name) ->
         time1 = :os.system_time(:millisecond)
         
@@ -137,7 +140,12 @@ defmodule HttpTest2.KVS do
       [account] ->
         {^id, email_id, sname, fname, phone_id, sex,
          birth, country_id, city_id, joined, status,
-         interests, premium, likes} = account
+         interests, premium_start, premium_finish, likes} = account
+
+         premium_val = cond do
+           premium_start==nil and premium_finish==nil -> nil
+           true -> %{start: premium_start, finish: premium_finish}
+         end
 
         %{
           id: id,
@@ -151,9 +159,9 @@ defmodule HttpTest2.KVS do
           city: city_from_id(city_id),
           joined: joined,
           status: status,
-          interests: interests,
-          premium: premium,
-          likes: likes
+          interests: untr_interests(interests),
+          premium: premium_val,
+          likes: untr_likes(id, likes)
         }
     end        
   end
@@ -166,15 +174,16 @@ defmodule HttpTest2.KVS do
       Utils.unicode_to_win1251(user["sname"]),
       Utils.unicode_to_win1251(user["fname"]),
       get_phone_id(user["phone"]),
-      nil, #user["sex"],
+      tr_sex(user["sex"]),
       user["birth"],
       get_country_id(user["country"]),
       get_city_id(user["city"]),
       user["joined"],
-      nil, #user["status"],
-      nil, #user["interests"],
-      nil, #user["premium"],
-      nil, #user["likes"]
+      tr_status(user["status"]),
+      tr_interests(user["interests"]),
+      user["premium"]["start"],
+      user["premium"]["finish"],
+      tr_likes(user["id"], user["likes"])
     }
 
     true = :ets.insert(:accounts, account)
@@ -220,6 +229,19 @@ defmodule HttpTest2.KVS do
       {:old, id} ->
         id
     end
+    # trie = Citys.get_trie()
+    # case Retrieval.contains?(trie, name) do
+    #   false ->
+    #     case Citys.get_id(name) do
+    #       {:new, id} ->
+    #         true = :ets.insert(:citys, {id, Utils.unicode_to_win1251(name)})
+    #         id
+    #       {:old, id} ->
+    #         id
+    #     end
+    #   id ->
+    #     id
+    # end
   end
 
   def city_from_id(nil), do: nil
@@ -240,6 +262,19 @@ defmodule HttpTest2.KVS do
       {:old, id} ->
         id
     end
+    # trie = Countrys.get_trie() # передать дерево в процесс
+    # case Retrieval.contains?(trie, name) do
+    #   false ->
+    #     case Countrys.get_id(name) do
+    #       {:new, id} ->
+    #         true = :ets.insert(:countrys, {id, Utils.unicode_to_win1251(name)})
+    #         id
+    #       {:old, id} ->
+    #         id
+    #     end
+    #   id ->
+    #     id
+    # end
   end
 
   def country_from_id(nil), do: nil
@@ -253,7 +288,7 @@ defmodule HttpTest2.KVS do
   # email
   def get_email_id(nil), do: nil
   def get_email_id(name) do
-    Emails.get_id(name)
+    # Emails.get_id(name)
     Utils.unicode_to_win1251(name)
   end
 
@@ -274,8 +309,39 @@ defmodule HttpTest2.KVS do
     Utils.win1251_to_unicode(id)
   end
 
+  defp tr_interests(nil), do: nil
+  defp tr_interests(interests) do
+    interests
+    |> Enum.map(fn(interest) -> get_interest_id(interest) end)
+  end
 
+  defp untr_interests(nil), do: nil
+  defp untr_interests(interests) do
+    interests
+    |> Enum.map(fn(interest_id) -> interest_from_id(interest_id) end)
+  end
 
+  # interests
+  def get_interest_id(nil), do: nil
+  def get_interest_id(name) do
+    case Interests.get_id(name) do
+      {:new, id} ->
+        true = :ets.insert(:interests, {id, Utils.unicode_to_win1251(name)})
+        id
+      {:old, id} ->
+        id
+    end
+  end
+
+  def interest_from_id(nil), do: nil
+  def interest_from_id(id) do
+    case :ets.lookup(:interests, id) do
+      [] -> nil
+      [{^id, name}] -> Utils.win1251_to_unicode(name)
+    end
+  end
+
+# ------------------------------------------------------------------------
   def transform_map(map) do
      map
      |> Enum.map(fn(key_value) -> tr_kv(key_value) end)
@@ -314,6 +380,27 @@ defmodule HttpTest2.KVS do
     # Logger.debug ">>> unknown key=#{inspect key}"
     {key, value}
   end
+
+  defp tr_likes(_, nil), do: nil
+  defp tr_likes(user_id, likes) do
+    likes
+    |> Enum.map(fn(like) ->
+      {like["id"], like["ts"]}
+      true = :ets.insert(:likes, {user_id, like["id"], like["ts"]})
+    end)
+
+    :likes
+  end
+
+  defp untr_likes(_, nil), do: nil
+  defp untr_likes(user_id, likes) do
+    case :ets.lookup(:likes, user_id) do
+      [] -> nil
+      likes_list ->
+        likes_list |> Enum.map(fn({_, id, ts}) -> %{id: id, ts: ts} end)
+    end
+  end
+
 
   defp tr_sex("m"), do: :m
   defp tr_sex("f"), do: :f

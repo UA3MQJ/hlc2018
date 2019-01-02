@@ -14,6 +14,7 @@ defmodule HttpTest2 do
       worker(HttpTest2.Countrys, []),
       worker(HttpTest2.Emails, []),
       worker(HttpTest2.Phones, []),
+      worker(HttpTest2.Interests, []),
       worker(HttpTest2.KVS, []),
       Plug.Adapters.Cowboy.child_spec(:http, Http_test2.Router, [], port: port)
     ]

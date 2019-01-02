@@ -1,4 +1,4 @@
-defmodule HttpTest2.Citys do
+defmodule HttpTest2.Interests do
   use GenServer
   require Logger
 
@@ -8,17 +8,13 @@ defmodule HttpTest2.Citys do
   end
 
   def init(_) do
-    Logger.info ">>> citys init"
+    Logger.info ">>> Countrys Interests"
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end
 
   def get_id(name) do
     GenServer.call(__MODULE__, {:get_id, name})
-  end
-  
-  def get_trie() do
-    GenServer.call(__MODULE__, :get_trie)
   end
 
   def handle_call({:get_id, name}, _, {new_id, trie} = state) do
@@ -28,10 +24,6 @@ defmodule HttpTest2.Citys do
       id ->
         {:reply, {:old, id}, state}
     end
-  end
-
-  def handle_call(:get_trie, _, {new_id, trie} = state) do
-    {:reply, trie, state}
   end
 
 
