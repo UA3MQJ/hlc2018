@@ -8,6 +8,7 @@ defmodule HttpTest2.KVS do
   alias HttpTest2.Phones
   alias HttpTest2.Emails
   alias HttpTest2.Interests
+  alias HttpTest2.Likes
 
   Record.defrecord :accounts, [
     :id,        # - уникальный внешний идентификатор пользователя. 
@@ -383,22 +384,31 @@ defmodule HttpTest2.KVS do
 
   defp tr_likes(_, nil), do: nil
   defp tr_likes(user_id, likes) do
+    # ets
     likes
     |> Enum.map(fn(like) ->
-      {like["id"], like["ts"]}
       true = :ets.insert(:likes, {user_id, like["id"], like["ts"]})
     end)
-
     :likes
+
+    # likes
+    # |> Enum.map(fn(like) ->
+    #   {like["id"], like["ts"]}
+    #   :ok = Likes.set_likes(user_id, likes)
+    # end)
+
+    # :likes
   end
 
   defp untr_likes(_, nil), do: nil
   defp untr_likes(user_id, likes) do
+    # ets
     case :ets.lookup(:likes, user_id) do
       [] -> nil
       likes_list ->
         likes_list |> Enum.map(fn({_, id, ts}) -> %{id: id, ts: ts} end)
     end
+    # likes
   end
 
 
