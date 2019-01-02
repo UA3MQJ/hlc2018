@@ -123,3 +123,9 @@ import ExProf.Macro
 profile do HttpTest2.KVS.read_file_sync2("accounts") end
 profile do HttpTest2.KVS.get_user(1) end
 
+:ets.lookup(:accounts, 1)
+:ets.lookup(:citys, 1)
+:ets.info(:citys)
+
+HttpTest2.KVS.get_user(1)
+

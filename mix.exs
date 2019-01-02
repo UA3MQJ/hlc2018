@@ -32,11 +32,12 @@ defmodule HttpTest2.Mixfile do
      # {:plug_cowboy, "~>1.0"},
      {:cowboy, "~>1.1.2"},
      {:poison, "~> 2.0"},
-     {:eljiffy, "~> 1.1.0"},
+     # {:eljiffy, "~> 1.1.0"},
      {:jaxon, "~> 1.0"},
      {:flow, "~> 0.14"},
      {:distillery, "~> 1.0"},
      {:exprof, "~> 0.2.3"},
+     {:retrieval, git: "https://github.com/UA3MQJ/retrieval.git"},
     ]
   end
 end
