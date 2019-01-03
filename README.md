@@ -135,7 +135,7 @@ cd $GOPATH
 cd highloadcup_tester
 ./highloadcup_tester -addr http://127.0.0.1:8080 -hlcupdocs /home/sea/hlc2018_data/ -test -phase 1
 
- curl 'http://localhost:8080/accounts/filter/?interests_any=%D0%9A%D0%BE%D0%BC%D0%BF%D1%8C%D1%8E%D1%82%D0%B5%D1%80%D1%8B&query_id=2399&limit=6&sex_eq=m'
+ curl 'http://localhost:8080/accounts/filter/?interests_any=Компьютеры&query_id=2399&limit=6&sex_eq=m'
 
 
 curl 'http://localhost:8080/accounts/filter/?interests_contains=Шопинг,Компьютеры,Мороженое&query_id=2395&limit=16&sex_eq=f'
