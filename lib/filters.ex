@@ -2,6 +2,8 @@ defmodule HttpTest2.Filters do
   require Logger
   alias HttpTest2.Utils
 
+  @no_need_check {nil, nil, nil, true}
+
   # {^id, email_id, sname, fname, phone_id, sex,
   #    birth, country_id, city_id, joined, status,
   #    interests, premium_start, premium_finish, likes} = account
@@ -24,7 +26,7 @@ defmodule HttpTest2.Filters do
         new_map = Map.merge(map, %{sex: sex})
         {params, account, new_map, break}
       true ->
-        {nil, nil, nil, true}
+        @no_need_check
     end
   end
   def sex_eq(t), do: t
@@ -47,7 +49,7 @@ defmodule HttpTest2.Filters do
             # new_map = Map.merge(map, %{interests: usr_interests})
             {params, account, map, break}
           false ->
-            {nil, nil, nil, true}
+            @no_need_check
         end             
     end
   end
@@ -58,7 +60,8 @@ defmodule HttpTest2.Filters do
     interests_contains = value |> String.split(",") |> MapSet.new()
     interests = :erlang.element(@interests, account)
     cond do
-      (interests==nil) -> {nil, nil, nil, true}
+      (interests==nil) ->
+        @no_need_check
       true ->
         usr_interests = interests
         |> Enum.map(fn(interest_id) ->
@@ -71,7 +74,7 @@ defmodule HttpTest2.Filters do
             # new_map = Map.merge(map, %{interests: usr_interests})
             {params, account, map, break}
           false ->
-            {nil, nil, nil, true}
+            @no_need_check
         end             
     end
   end
@@ -91,7 +94,7 @@ defmodule HttpTest2.Filters do
         new_map = Map.merge(map, %{status: params["status_eq"]})
         {params, account, new_map, break}
       true ->
-        {nil, nil, nil, true}
+        @no_need_check
     end
   end
   def status_eq(t), do: t
@@ -114,7 +117,7 @@ defmodule HttpTest2.Filters do
         new_map = Map.merge(map, %{status: text_status})
         {params, account, new_map, break}
       true ->
-        {nil, nil, nil, true}
+        @no_need_check
     end
   end
   def status_neq(t), do: t
@@ -129,7 +132,7 @@ defmodule HttpTest2.Filters do
         new_map = Map.merge(map, %{fname: value})
         {params, account, new_map, break}
       true ->
-        {nil, nil, nil, true}
+        @no_need_check
     end
   end
   def fname_eq(t), do: t
@@ -143,7 +146,7 @@ defmodule HttpTest2.Filters do
         new_map = Map.merge(map, %{fname: fname})
         {params, account, new_map, break}
       true ->
-        {nil, nil, nil, true}
+        @no_need_check
     end
   end
   def fname_any(t), do: t
@@ -155,18 +158,18 @@ defmodule HttpTest2.Filters do
       # если указано
       "0" ->
         case fname do
-          nil -> {nil, nil, nil, true}
+          nil -> @no_need_check
           fname -> {params, account, Map.merge(map, %{fname: fname}), break}
         end
       # не указано
       "1" ->
         case fname do
           nil -> {params, account, map, break}
-          _fname -> {nil, nil, nil, true}
+          _fname -> @no_need_check
         end
       # указана какая-то херня
       _else ->
-        {nil, nil, nil, true}
+        @no_need_check
     end
   end
   def fname_null(t), do: t
