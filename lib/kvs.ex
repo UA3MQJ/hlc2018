@@ -9,6 +9,7 @@ defmodule HttpTest2.KVS do
   alias HttpTest2.Emails
   alias HttpTest2.Interests
   alias HttpTest2.Likes
+  alias HttpTest2.Accounts
 
   Record.defrecord :accounts, [
     :id,        # - уникальный внешний идентификатор пользователя. 
@@ -70,12 +71,13 @@ defmodule HttpTest2.KVS do
   # delayed init
   def handle_info(:init, _state) do
     :observer.start()
-    :timer.sleep(5000)
+    # :timer.sleep(5000)
 
     time1 = :os.system_time(:millisecond)
 
     create_db()
     read_file_sync2("accounts")
+    Accounts.sort_ids()
 
     time2 = :os.system_time(:millisecond)
     Logger.info ">>> read_file #{time2 - time1} ms"
@@ -136,9 +138,9 @@ defmodule HttpTest2.KVS do
   end
 
   def get_user(id) do
-    case :ets.lookup(:accounts, id) do
-      [] -> nil
-      [account] ->
+    case Accounts.get(id) do
+      nil -> nil
+      account ->
         {^id, email_id, sname, fname, phone_id, sex,
          birth, country_id, city_id, joined, status,
          interests, premium_start, premium_finish, likes} = account
@@ -164,7 +166,9 @@ defmodule HttpTest2.KVS do
           premium: premium_val,
           likes: untr_likes(id, likes)
         }
-    end        
+
+    end
+
   end
 
   # добавить пользователя без валидации
@@ -187,7 +191,7 @@ defmodule HttpTest2.KVS do
       tr_likes(user["id"], user["likes"])
     }
 
-    true = :ets.insert(:accounts, account)
+    Accounts.set(user["id"], account)
 
     :ok
   end
@@ -205,6 +209,19 @@ defmodule HttpTest2.KVS do
   def account_set_likes(likes_data) do
 
     :ok
+  end
+
+  def filter(params) do
+    time1 = :os.system_time(:millisecond)
+    accounts = Accounts.filter(params)
+    time2 = :os.system_time(:millisecond)
+    Logger.info ">>> filter #{time2 - time1} ms"
+
+    case accounts do
+      :error -> :error
+      accounts -> %{accounts: accounts}
+    end
+    
   end
 
 # -------------------------------------------------------------------------------------------
@@ -316,8 +333,8 @@ defmodule HttpTest2.KVS do
     |> Enum.map(fn(interest) -> get_interest_id(interest) end)
   end
 
-  defp untr_interests(nil), do: nil
-  defp untr_interests(interests) do
+  def untr_interests(nil), do: nil
+  def untr_interests(interests) do
     interests
     |> Enum.map(fn(interest_id) -> interest_from_id(interest_id) end)
   end
@@ -384,33 +401,26 @@ defmodule HttpTest2.KVS do
 
   defp tr_likes(_, nil), do: nil
   defp tr_likes(user_id, likes) do
-    # ets
-    likes
-    |> Enum.map(fn(like) ->
-      true = :ets.insert(:likes, {user_id, like["id"], like["ts"]})
+    new_likes = likes
+    |> Enum.reduce(<<>>, fn(like, acc) ->
+      id = like["id"]
+      ts = like["ts"]
+      << id :: 32, ts :: 32>> <> acc
     end)
+    :ok = Likes.set_likes(user_id, new_likes)
     :likes
-
-    # likes
-    # |> Enum.map(fn(like) ->
-    #   {like["id"], like["ts"]}
-    #   :ok = Likes.set_likes(user_id, likes)
-    # end)
-
-    # :likes
   end
 
   defp untr_likes(_, nil), do: nil
   defp untr_likes(user_id, likes) do
-    # ets
-    case :ets.lookup(:likes, user_id) do
-      [] -> nil
-      likes_list ->
-        likes_list |> Enum.map(fn({_, id, ts}) -> %{id: id, ts: ts} end)
-    end
-    # likes
+    likes = Likes.get_likes(user_id)
+    _untr_likes([], likes)
+    # |> Enum.map(fn({id, ts}) -> %{id: id, ts: ts} end)
   end
-
+  defp _untr_likes(arr, <<>>), do: arr
+  defp _untr_likes(arr, <<id :: 32, ts :: 32 , tail :: binary >>) do
+    _untr_likes([%{id: id, ts: ts}] ++ arr, tail)
+  end
 
   defp tr_sex("m"), do: :m
   defp tr_sex("f"), do: :f

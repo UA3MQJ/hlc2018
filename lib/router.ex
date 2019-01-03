@@ -13,6 +13,27 @@ defmodule Http_test2.Router do
   plug(:match)
   plug(:dispatch)
 
+  get "/accounts/filter/" do
+    params = conn.params
+    body = conn.body_params
+    # Logger.debug ">>>> conn=#{inspect conn}"
+    # Logger.debug ">>>> params=#{inspect params}"
+    # Logger.debug ">>>> body=#{inspect body}"
+
+    result = KVS.filter(params)
+
+    case result do
+      :error ->
+        send_resp(conn, 400, "")
+      result ->
+        json = result
+        |> Poison.encode!()
+
+        send_resp(conn, 200, json)
+    end
+  end
+
+
 
   post "/accounts/new/" do
     _params = conn.params
@@ -58,6 +79,12 @@ defmodule Http_test2.Router do
   end
 
   match _ do
+    params = conn.params
+    body = conn.body_params
+    # Logger.debug ">>>> conn=#{inspect conn}"
+    # Logger.debug ">>>> params=#{inspect params}"
+    # Logger.debug ">>>> body=#{inspect body}"
+
     send_resp(conn, 404, "")
   end
 
