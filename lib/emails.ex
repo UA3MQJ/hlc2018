@@ -9,6 +9,7 @@ defmodule HttpTest2.Emails do
 
   def init(_) do
     # Logger.info ">>> Emails init"
+    # :ets.new(:emails, [:named_table, :public, :set, {:keypos, 1}])
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

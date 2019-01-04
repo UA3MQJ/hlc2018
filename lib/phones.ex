@@ -9,6 +9,7 @@ defmodule HttpTest2.Phones do
 
   def init(_) do
     # Logger.info ">>> Phones init"
+    # :ets.new(:phones, [:named_table, :public, :set, {:keypos, 1}])
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

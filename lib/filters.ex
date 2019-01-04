@@ -1,6 +1,11 @@
 defmodule HttpTest2.Filters do
   require Logger
   alias HttpTest2.Utils
+  alias HttpTest2.Citys
+  alias HttpTest2.Countrys
+  alias HttpTest2.Interests
+  alias HttpTest2.Likes
+  alias HttpTest2.Accounts
 
   @no_need_check {nil, nil, nil, true}
 
@@ -23,7 +28,7 @@ defmodule HttpTest2.Filters do
   @premium_finish 14
   @likes 15
 
-  def filter(params, map, id_list, now) do
+  def filter(params, id_list, now) do
     # Logger.debug ">>>> filter params=#{inspect params}"
     # result = []
     limit_str = params["limit"] || "10"
@@ -53,10 +58,11 @@ defmodule HttpTest2.Filters do
         {result, _} = id_list
         |> Enum.reduce_while({[], limit}, fn(id, {a_list, a_limit} = acc) ->
 
-          account = map[id]
-          {^id, email_id, sname, fname, phone_id, sex,
-             birth, country_id, city_id, joined, status,
-             interests, premium_start, premium_finish, likes} = account
+          account = Accounts.get(id)
+
+          {^id, email_id, _sname, _fname, _phone_id, _sex,
+             _birth, _country_id, _city_id, _joined, _status,
+             _interests, _premium_start, _premium_finish, _likes} = account
 
           # проверим запись фильтрами
           {_, _, result_map, _} = {params, account, %{}, false}
@@ -91,7 +97,7 @@ defmodule HttpTest2.Filters do
           case result_map do
             nil -> {:cont, acc}
             _ ->
-              email = HttpTest2.KVS.email_from_id(email_id)
+              email = Utils.win1251_to_unicode(email_id)
               # Logger.debug ">>>> result_map=#{inspect result_map}"
               nresult_map = result_map
               |> Map.merge(%{id: id})
@@ -139,10 +145,7 @@ defmodule HttpTest2.Filters do
     cond do
       (interests==nil) -> {nil, nil, nil, true}
       true ->
-        usr_interests = interests
-        |> Enum.map(fn(interest_id) ->
-          HttpTest2.KVS.interest_from_id(interest_id)
-        end)
+        usr_interests = Interests.ids_to_names(interests)
         usr_interests_set = MapSet.new(usr_interests)
         match = MapSet.size(MapSet.intersection(interests_any, usr_interests_set)) > 0
         case match do
@@ -167,10 +170,7 @@ defmodule HttpTest2.Filters do
       (interests==nil) ->
         @no_need_check
       true ->
-        usr_interests = interests
-        |> Enum.map(fn(interest_id) ->
-          HttpTest2.KVS.interest_from_id(interest_id)
-        end)
+        usr_interests = Interests.ids_to_names(interests)
         usr_interests_set = MapSet.new(usr_interests)
         match = MapSet.subset?(interests_contains, usr_interests_set)
         case match do
@@ -339,7 +339,7 @@ defmodule HttpTest2.Filters do
   def country_eq({%{"country_eq" => value} = params, account, map, break}) do
     country_eq = value
 
-    country = HttpTest2.KVS.country_from_id(:erlang.element(@country_id, account))
+    country = Countrys.id_to_name(:erlang.element(@country_id, account))
     cond do
       (country_eq==country) ->
         new_map = Map.merge(map, %{country: country})
@@ -352,7 +352,7 @@ defmodule HttpTest2.Filters do
 
   def country_null({_, _, _, true} = t), do: t
   def country_null({%{"country_null" => value} = params, account, map, break}) do
-    country = HttpTest2.KVS.country_from_id(:erlang.element(@country_id, account))
+    country = Countrys.id_to_name(:erlang.element(@country_id, account))
     case value do
       # если указано
       "0" ->
@@ -377,7 +377,7 @@ defmodule HttpTest2.Filters do
   def city_eq({%{"city_eq" => value} = params, account, map, break}) do
     city_eq = value
 
-    city = HttpTest2.KVS.city_from_id(:erlang.element(@city_id, account))
+    city = Citys.id_to_name(:erlang.element(@city_id, account))
     cond do
       (city_eq==city) ->
         new_map = Map.merge(map, %{city: city})
@@ -390,7 +390,7 @@ defmodule HttpTest2.Filters do
 
   def city_null({_, _, _, true} = t), do: t
   def city_null({%{"city_null" => value} = params, account, map, break}) do
-    city = HttpTest2.KVS.city_from_id(:erlang.element(@city_id, account))
+    city = Citys.id_to_name(:erlang.element(@city_id, account))
     case value do
       # если указано
       "0" ->
@@ -414,7 +414,7 @@ defmodule HttpTest2.Filters do
   def city_any({_, _, _, true} = t), do: t
   def city_any({%{"city_any" => value} = params, account, map, break}) do
     city_any = value |> String.split(",") |> MapSet.new()
-    city = HttpTest2.KVS.city_from_id(:erlang.element(@city_id, account))
+    city = Citys.id_to_name(:erlang.element(@city_id, account))
     cond do
       (city in city_any) ->
         new_map = Map.merge(map, %{city: city})
@@ -429,7 +429,7 @@ defmodule HttpTest2.Filters do
   def phone_code({%{"phone_code" => value} = params, account, map, break}) do
     phone_code = value
 
-    phone = HttpTest2.KVS.phone_from_id(:erlang.element(@phone_id, account))
+    phone = Utils.win1251_to_unicode(:erlang.element(@phone_id, account))
     code = case phone do
       nil -> nil
       phone -> phone |> String.split("(") |> tl() |> hd |> String.split(")")|> hd
@@ -448,7 +448,7 @@ defmodule HttpTest2.Filters do
 
   def phone_null({_, _, _, true} = t), do: t
   def phone_null({%{"phone_null" => value} = params, account, map, break}) do
-    phone = HttpTest2.KVS.phone_from_id(:erlang.element(@phone_id, account))
+    phone = Utils.win1251_to_unicode(:erlang.element(@phone_id, account))
     case value do
       # если указано
       "0" ->
@@ -473,7 +473,7 @@ defmodule HttpTest2.Filters do
   def email_domain({%{"email_domain" => value} = params, account, map, break}) do
     email_domain = value
 
-    email = HttpTest2.KVS.email_from_id(:erlang.element(@email_id, account))
+    email = Utils.win1251_to_unicode(:erlang.element(@email_id, account))
 
     domain = case email do
       nil -> nil
@@ -498,7 +498,7 @@ defmodule HttpTest2.Filters do
   def email_lt({%{"email_lt" => value} = params, account, map, break}) do
     email_lt = value
 
-    email = HttpTest2.KVS.email_from_id(:erlang.element(@email_id, account))
+    email = Utils.win1251_to_unicode(:erlang.element(@email_id, account))
    
     cond do
       email == nil ->
@@ -516,7 +516,7 @@ defmodule HttpTest2.Filters do
   def email_gt({%{"email_gt" => value} = params, account, map, break}) do
     email_gt = value
 
-    email = HttpTest2.KVS.email_from_id(:erlang.element(@email_id, account))
+    email = Utils.win1251_to_unicode(:erlang.element(@email_id, account))
    
     cond do
       email == nil ->
@@ -646,7 +646,7 @@ defmodule HttpTest2.Filters do
     end)
     id = :erlang.element(@id, account)
     likes = :erlang.element(@likes, account)
-    likes_list = HttpTest2.KVS.untr_likes(id, likes)
+    likes_list = Likes.get(id)
 
     # Logger.debug ">>>>>>>>> likes_list=#{inspect likes_list}"
     match = cond do

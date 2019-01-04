@@ -9,24 +9,33 @@ defmodule HttpTest2.Likes do
 
   def init(_) do
     # Logger.info ">>> Likes init"
+    :ets.new(:likes, [:named_table, :public, :bag])
 
     {:ok, %{}}
   end
 
-  def set_likes(id, likes) do
-    GenServer.call(__MODULE__, {:set_likes, id, likes})
+  def set(_, nil), do: nil
+  def set(user_id, likes) do
+    {bin_likes, count} = likes
+    |> Enum.reduce({<<>>, 0}, fn(like, {bin_acc, count}) ->
+      id = like["id"]
+      ts = like["ts"]
+      {<< id :: 32, ts :: 32>> <> bin_acc, count + 1}
+    end)
+    true = :ets.insert(:likes, {user_id, bin_likes})
+    count
   end
 
-  def get_likes(id) do
-    GenServer.call(__MODULE__, {:get_likes, id})
+  def get(user_id) do
+    case :ets.lookup(:likes, user_id) do
+      [] -> nil
+      [{^user_id, bin_likes}] -> _decode_bin_likes([], bin_likes)
+    end
   end
 
-  def handle_call({:set_likes, id, likes}, _, state) do
-    {:reply, :ok, Map.merge(state, %{id => likes})}
-  end
-
-  def handle_call({:get_likes, id}, _, state) do
-    {:reply, state[id], state}
+  def _decode_bin_likes(arr, <<>>), do: arr
+  def _decode_bin_likes(arr, <<id :: 32, ts :: 32 , tail :: binary >>) do
+    _decode_bin_likes([%{id: id, ts: ts}] ++ arr, tail)
   end
 
 

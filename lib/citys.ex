@@ -1,7 +1,7 @@
 defmodule HttpTest2.Citys do
   use GenServer
   require Logger
-
+  alias HttpTest2.Utils
 
   def start_link do
       :gen_server.start_link({:local, __MODULE__}, __MODULE__, [], [])
@@ -9,24 +9,33 @@ defmodule HttpTest2.Citys do
 
   def init(_) do
     # Logger.info ">>> citys init"
+    :ets.new(:citys, [:named_table, :public, :set, {:keypos, 1}])
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end
 
-  def get_id(name) do
-    GenServer.call(__MODULE__, {:get_id, name})
+  def name_to_id(nil),  do: nil
+  def name_to_id(name), do: GenServer.call(__MODULE__, {:name_to_id, name})
+
+  def id_to_name(nil), do: nil
+  def id_to_name(id) do
+    case :ets.lookup(:citys, id) do
+      [] -> nil
+      [{^id, name}] -> Utils.win1251_to_unicode(name)
+    end
   end
   
-  def get_trie() do
-    GenServer.call(__MODULE__, :get_trie)
-  end
+  def get_trie(), do: GenServer.call(__MODULE__, :get_trie)
 
-  def handle_call({:get_id, name}, _, {new_id, trie} = state) do
+  # callbacks 
+
+  def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
     case Retrieval.contains?(trie, name) do
       false ->
-        {:reply, {:new, new_id}, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
+        true = :ets.insert(:citys, {new_id, Utils.unicode_to_win1251(name)})
+        {:reply, new_id, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
       id ->
-        {:reply, {:old, id}, state}
+        {:reply, id, state}
     end
   end
 
