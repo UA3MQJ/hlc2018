@@ -8,7 +8,7 @@ defmodule HttpTest2.Countrys do
   end
 
   def init(_) do
-    Logger.info ">>> Countrys init"
+    # Logger.info ">>> Countrys init"
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

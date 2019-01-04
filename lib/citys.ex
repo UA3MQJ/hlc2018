@@ -8,7 +8,7 @@ defmodule HttpTest2.Citys do
   end
 
   def init(_) do
-    Logger.info ">>> citys init"
+    # Logger.info ">>> citys init"
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

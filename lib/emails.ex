@@ -8,7 +8,7 @@ defmodule HttpTest2.Emails do
   end
 
   def init(_) do
-    Logger.info ">>> Emails init"
+    # Logger.info ">>> Emails init"
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

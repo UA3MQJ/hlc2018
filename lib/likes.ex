@@ -8,7 +8,7 @@ defmodule HttpTest2.Likes do
   end
 
   def init(_) do
-    Logger.info ">>> Likes init"
+    # Logger.info ">>> Likes init"
 
     {:ok, %{}}
   end

@@ -144,4 +144,25 @@ curl 'http://localhost:8080/accounts/filter/?interests_contains=Шопинг,К�
 
 curl 'http://localhost:8080/accounts/filter/?interests_contains=Шопинг,Компьютеры&query_id=2395&limit=16&sex_eq=f&status_neq=свободны'
 
+curl 'http://localhost:8080/accounts/filter/?fname_eq=Анна'
+
+curl 'http://localhost:8080/accounts/filter/?fname_any=Анна,Алла'
+
+curl 'http://localhost:8080/accounts/filter/?sname_eq=Колетако'
+
+curl 'http://localhost:8080/accounts/filter/?sname_starts=Колета'
+
+curl 'http://localhost:8080/accounts/filter/?phone_code=908'
+
+curl 'http://localhost:8080/accounts/filter/?interests_any=Поп+рок,Путешествия,Танцевальная,Клубникаquery_id=990&city_eq=Росориж&status_neq=свободны&limit=22'
+
+curl 'http://localhost:8080/accounts/filter/?likes_contains=18011,9359,11545&limit=22'
+
+curl 'http://localhost:8080/accounts/filter/?sex_eq=f&country_halcettokpytet=%D0%A0%D0%BE%D1%81%D0%B5%D0%B7%D0%B8%D1%8F&query_id=2269&limit=28'
+
+{:ok, file} = File.open("data/phase_1_get/result.json", [:read, :utf])
+line = IO.read(file, :line)
+result = (Poison.decode!(line))["result"]
+
+
 

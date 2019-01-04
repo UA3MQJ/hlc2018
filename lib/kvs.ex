@@ -63,7 +63,7 @@ defmodule HttpTest2.KVS do
   end
 
   def init(_) do
-    Logger.info ">>> KVS init * jaxon + stream + flow *"
+    # Logger.info ">>> KVS init * jaxon + stream + flow *"
     send(self(), :init)
     {:ok, nil}
   end
@@ -82,8 +82,17 @@ defmodule HttpTest2.KVS do
     time2 = :os.system_time(:millisecond)
     Logger.info ">>> read_file #{time2 - time1} ms"
 
+    [now_time_str, type] = File.read!("priv/data/options.txt") |> String.split("\n")
+    
+    now_time = case Integer.parse(now_time_str) do
+      {intVal, ""} -> intVal
+      :error -> nil
+    end
 
-    {:noreply, nil}
+    Logger.debug ">>> now_time=#{inspect now_time}"
+
+
+    {:noreply, %{now_time: now_time, type: type}}
   end
 
     # :erlang.processes()
@@ -411,14 +420,14 @@ defmodule HttpTest2.KVS do
     :likes
   end
 
-  defp untr_likes(_, nil), do: nil
-  defp untr_likes(user_id, likes) do
+  def untr_likes(_, nil), do: nil
+  def untr_likes(user_id, likes) do
     likes = Likes.get_likes(user_id)
     _untr_likes([], likes)
     # |> Enum.map(fn({id, ts}) -> %{id: id, ts: ts} end)
   end
-  defp _untr_likes(arr, <<>>), do: arr
-  defp _untr_likes(arr, <<id :: 32, ts :: 32 , tail :: binary >>) do
+  def _untr_likes(arr, <<>>), do: arr
+  def _untr_likes(arr, <<id :: 32, ts :: 32 , tail :: binary >>) do
     _untr_likes([%{id: id, ts: ts}] ++ arr, tail)
   end
 
