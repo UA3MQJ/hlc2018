@@ -23,6 +23,95 @@ defmodule HttpTest2.Filters do
   @premium_finish 14
   @likes 15
 
+  def filter(params, map, id_list, now) do
+    # Logger.debug ">>>> filter params=#{inspect params}"
+    # result = []
+    limit_str = params["limit"] || "10"
+    limit = case Integer.parse(limit_str) do
+      {intVal, ""} -> intVal
+      :error -> :error
+    end
+
+    err_params_list = (Map.keys(params)) -- ["query_id", "limit", "sex_eq", "interests_any",
+                      "interests_contains", "status_eq", "status_neq", "fname_eq", "fname_any", 
+                      "fname_null", "sname_eq", "sname_starts", "sname_null", 
+                      "country_eq", "country_null", "city_eq", "city_null", 
+                      "city_any", "phone_code", "phone_null", "email_domain", 
+                      "email_lt", "email_gt", "birth_lt", "birth_gt", 
+                      "birth_year", "premium_now", "premium_null", "likes_contains"]
+
+
+
+    params_is_valid? = !(limit==:error) and (length(err_params_list) == 0)
+
+    # if !params_is_valid? do
+    #   Logger.debug ">>> err_params_list=#{inspect err_params_list}"
+    # end
+
+    case params_is_valid? do
+      true ->
+        {result, _} = id_list
+        |> Enum.reduce_while({[], limit}, fn(id, {a_list, a_limit} = acc) ->
+
+          account = map[id]
+          {^id, email_id, sname, fname, phone_id, sex,
+             birth, country_id, city_id, joined, status,
+             interests, premium_start, premium_finish, likes} = account
+
+          # проверим запись фильтрами
+          {_, _, result_map, _} = {params, account, %{}, false}
+          |> sex_eq()
+          |> interests_any()
+          |> interests_contains()
+          |> status_eq()
+          |> status_neq()
+          |> fname_eq()
+          |> fname_any()
+          |> fname_null()
+          |> sname_eq()
+          |> sname_starts()
+          |> sname_null()
+          |> country_eq()
+          |> country_null()
+          |> city_eq()
+          |> city_null()
+          |> city_any()
+          |> phone_code()
+          |> phone_null()
+          |> email_domain()
+          |> email_lt()
+          |> email_gt()
+          |> birth_lt()
+          |> birth_gt()
+          |> birth_year()
+          |> premium_now(now)
+          |> premium_null()
+          |> likes_contains()
+
+          case result_map do
+            nil -> {:cont, acc}
+            _ ->
+              email = HttpTest2.KVS.email_from_id(email_id)
+              # Logger.debug ">>>> result_map=#{inspect result_map}"
+              nresult_map = result_map
+              |> Map.merge(%{id: id})
+              |> Map.merge(%{email: email})
+
+              new_limit = a_limit - 1
+              case new_limit do
+                0 -> {:halt, {[nresult_map] ++ a_list, new_limit}}
+                _ -> {:cont, {[nresult_map] ++ a_list, new_limit}}
+              end
+          end
+        end)
+
+        :lists.reverse(result)
+      false ->
+        :error
+    end
+
+  end
+
   def sex_eq({_, _, _, true} = t), do: t
   def sex_eq({%{"sex_eq" => value} = params, account, map, break}) do
     sex_eq = case value do

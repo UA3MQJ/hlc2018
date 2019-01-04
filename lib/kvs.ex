@@ -221,10 +221,13 @@ defmodule HttpTest2.KVS do
   end
 
   def filter(params) do
-    time1 = :os.system_time(:millisecond)
+    # time1 = :os.system_time(:millisecond)
     accounts = Accounts.filter(params)
-    time2 = :os.system_time(:millisecond)
+    # time2 = :os.system_time(:millisecond)
     # Logger.info ">>> filter #{time2 - time1} ms"
+
+    # {map, id_list, now} = Accounts.get_state()
+    # accounts = HttpTest2.Filters.filter(params, map, id_list, now)
 
     case accounts do
       :error -> :error
