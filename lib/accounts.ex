@@ -10,29 +10,35 @@ defmodule HttpTest2.Accounts do
   def init(_) do
     # Logger.info ">>> accounts init"
     :ets.new(:accounts, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:index, [:named_table, :public, :set, {:keypos, 1}])
 
-    [now_time_str, type] = File.read!("priv/data/options.txt") |> String.split("\n")
+    true = :ets.insert(:index, {:status, :not_ready})
+
+    [now_time_str, _type] = File.read!("priv/data/options.txt") |> String.split("\n")
     
     now_time = case Integer.parse(now_time_str) do
       {intVal, ""} -> intVal
       :error -> nil
     end
+    true = :ets.insert(:index, {:now_time, now_time})
 
-    {:ok, {%{}, [], now_time}}
+    ids = %{id_list: [], sex_m: [], sex_f: []}
+    {:ok, {%{}, ids, now_time}}
   end
 
   def set(id, account) do
-    # Logger.debug ">>>> account=#{inspect account}"
     true = :ets.insert(:accounts, account)
     GenServer.cast(__MODULE__, {:set, id})
+    sex = :erlang.element(6, account)
+    case sex do
+      :m -> GenServer.cast(__MODULE__, {:set_sex_m, id})
+      :f -> GenServer.cast(__MODULE__, {:set_sex_f, id})
+    end
   end
 
-  # def set_async(id, account) do
-  #   GenServer.cast(__MODULE__, {:set_async, id, account})
-  # end
 
   def sort_ids() do
-    GenServer.cast(__MODULE__, :sort_ids)
+    GenServer.call(__MODULE__, :sort_ids)
   end
 
   def get(id) do
@@ -42,52 +48,91 @@ defmodule HttpTest2.Accounts do
     end
   end
 
-  def get_id_list(), do: GenServer.call(__MODULE__, :get_id_list)
+  def get_id_list() do
+    case :ets.lookup(:index, :status) do
+      [{:status, :not_ready}] -> sort_ids()
+      [{:status, :ready}] -> :ok
+    end
 
+    case :ets.lookup(:index, :sort_ids) do
+      [] -> nil
+      [{:sort_ids, id_list}] -> id_list
+    end    
+  end
+
+  def get_sex_m() do
+    case :ets.lookup(:index, :status) do
+      [{:status, :not_ready}] -> sort_ids()
+      [{:status, :ready}] -> :ok
+    end
+
+    case :ets.lookup(:index, :sex_m) do
+      [] -> nil
+      [{:sex_m, id_list}] -> id_list
+    end    
+  end
+
+  def get_sex_f() do
+    case :ets.lookup(:index, :status) do
+      [{:status, :not_ready}] -> sort_ids()
+      [{:status, :ready}] -> :ok
+    end
+
+    case :ets.lookup(:index, :sex_f) do
+      [] -> nil
+      [{:sex_f, id_list}] -> id_list
+    end    
+  end
+  def get_now_time() do
+    case :ets.lookup(:index, :now_time) do
+      [] -> nil
+      [{:now_time, now_time}] -> now_time
+    end    
+  end
 
   def filter(params) do
-    {id_list, now} = get_id_list()
-    Filters.filter(params, id_list, now)
+    Filters.filter(params)
   end
 
-  # def handle_call({:set, id, account}, _, {map, id_list, now} = state) do
-  #   new_map = Map.merge(map, %{id => account})
-  #   new_id_list = [id] ++ id_list
-  #   {:reply, :ok, {new_map, new_id_list, now}}
-  # end
 
-  # def handle_call({:get, id}, _, {map, id_list, now} = state) do
-  #   result = map[id]
-  #   {:reply, result, state}
-  # end
-
-  # def handle_call(:get_state, _, state) do
-  #   {:reply, state, state}
-  # end
-
-  def handle_call(:get_id_list, _, {_map, id_list, now} = state) do
-    {:reply, {id_list, now}, state}
-  end 
-
-  # def handle_cast({:set_async, id, account}, {map, id_list, now} = _state) do
-  #   new_map = Map.merge(map, %{id => account})
-  #   new_id_list = [id] ++ id_list
-  #   {:noreply, {new_map, new_id_list}}
-  # end
-
-  def handle_cast({:set, id}, {map, id_list, now} = _state) do
+  def handle_cast({:set, id}, {map, %{id_list: id_list} = ids, now} = _state) do
     new_id_list = [id] ++ id_list
-    {:noreply, {map, new_id_list, now}}
+    {:noreply, {map, %{ids | id_list: new_id_list}, now}}
+  end
+
+  def handle_cast({:set_sex_m, id}, {map, %{sex_m: sex_m} = ids, now} = _state) do
+    new_sex_m = [id] ++ sex_m
+    {:noreply, {map, %{ids | sex_m: new_sex_m}, now}}
+  end
+
+  def handle_cast({:set_sex_f, id}, {map, %{sex_f: sex_f} = ids, now} = _state) do
+    new_sex_f = [id] ++ sex_f
+    {:noreply, {map, %{ids | sex_f: new_sex_f}, now}}
   end
 
 
-  def handle_cast(:sort_ids, {map, id_list, now} = _state) do
+  def handle_call(:sort_ids, _, {map, %{id_list: id_list, sex_m: sex_m, sex_f: sex_f} = ids, now} = _state) do
     time1 = :os.system_time(:millisecond)
-    new_id_list = id_list |> :lists.sort() |> :lists.reverse()
+    new_id_list = id_list |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
     time2 = :os.system_time(:millisecond)
     Logger.info ">>> sort_ids #{time2 - time1} ms"
 
-    {:noreply, {map, new_id_list, now}}
+    time1 = :os.system_time(:millisecond)
+    new_sex_m = sex_m |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
+    time2 = :os.system_time(:millisecond)
+    Logger.info ">>> sex_m #{time2 - time1} ms"
+
+    time1 = :os.system_time(:millisecond)
+    new_sex_f = sex_f |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
+    time2 = :os.system_time(:millisecond)
+    Logger.info ">>> sex_f #{time2 - time1} ms"
+
+    true = :ets.insert(:index, {:sort_ids, new_id_list})
+    true = :ets.insert(:index, {:sex_m, new_sex_m})
+    true = :ets.insert(:index, {:sex_f, new_sex_f})
+    true = :ets.insert(:index, {:status, :ready})
+
+    {:reply, :ok, {map, %{ids | id_list: new_id_list}, now}}
   end
 
 end

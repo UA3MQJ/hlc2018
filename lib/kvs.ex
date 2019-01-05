@@ -110,7 +110,7 @@ defmodule HttpTest2.KVS do
     time10 = :os.system_time(:millisecond)
 
     file_list
-    |> Flow.from_enumerable(stages: 8, max_demand: 1)
+    |> Flow.from_enumerable(stages: 4, max_demand: 1)
     |> Flow.flat_map(fn(file_name) ->
         time1 = :os.system_time(:millisecond)
         

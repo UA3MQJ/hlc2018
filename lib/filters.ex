@@ -28,7 +28,7 @@ defmodule HttpTest2.Filters do
   @premium_finish 14
   @likes 15
 
-  def filter(params, id_list, now) do
+  def filter(params) do
     # Logger.debug ">>>> filter params=#{inspect params}"
     # result = []
     limit_str = params["limit"] || "10"
@@ -36,6 +36,9 @@ defmodule HttpTest2.Filters do
       {intVal, ""} -> intVal
       :error -> :error
     end
+
+    id_list = Accounts.get_id_list()
+    now_time = Accounts.get_now_time()
 
     err_params_list = (Map.keys(params)) -- ["query_id", "limit", "sex_eq", "interests_any",
                       "interests_contains", "status_eq", "status_neq", "fname_eq", "fname_any", 
@@ -49,6 +52,11 @@ defmodule HttpTest2.Filters do
 
     params_is_valid? = !(limit==:error) and (length(err_params_list) == 0)
 
+    id_list = case params["sex_eq"] do
+      nil -> id_list
+      "m" -> Accounts.get_sex_m()
+      "f" -> Accounts.get_sex_f()
+    end
     # if !params_is_valid? do
     #   Logger.debug ">>> err_params_list=#{inspect err_params_list}"
     # end
@@ -66,7 +74,7 @@ defmodule HttpTest2.Filters do
 
           # проверим запись фильтрами
           {_, _, result_map, _} = {params, account, %{}, false}
-          |> sex_eq()
+          # |> sex_eq()
           |> interests_any()
           |> interests_contains()
           |> status_eq()
@@ -90,7 +98,7 @@ defmodule HttpTest2.Filters do
           |> birth_lt()
           |> birth_gt()
           |> birth_year()
-          |> premium_now(now)
+          |> premium_now(now_time)
           |> premium_null()
           |> likes_contains()
 
