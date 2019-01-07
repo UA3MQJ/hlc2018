@@ -9,6 +9,19 @@ defmodule HttpTest2 do
     
     port = Application.get_env(:http_test2, :cowboy_port, 80)
 
+    dispatch = :cowboy_router.compile([
+      {:_,
+       [
+         {"/accounts/filter", DynamicTestHandler, []}
+       ]}
+    ])
+
+    {:ok, _} = :cowboy.start_clear(
+      :my_http_listener,
+      [{:port, port}],
+      %{:env => %{:dispatch => dispatch}}
+    )
+
     children = [
       worker(HttpTest2.Citys, []),
       worker(HttpTest2.Countrys, []),
@@ -18,10 +31,11 @@ defmodule HttpTest2 do
       worker(HttpTest2.Likes, []),
       worker(HttpTest2.Accounts, []),
       worker(HttpTest2.KVS, []),
-      Plug.Adapters.Cowboy.child_spec(:http, Http_test2.Router, [], port: port)
+      # Plug.Adapters.Cowboy.child_spec(:http, Http_test2.Router, [], port: port)
     ]
 
-    Logger.info(">>> Started application")
+    # Logger.info(">>> Started application")
+    IO.puts ">>> Started application"
     Supervisor.start_link(children, strategy: :one_for_one)
   end
 end

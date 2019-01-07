@@ -70,7 +70,7 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    :observer.start()
+    # :observer.start()
     # :timer.sleep(5000)
 
     time1 = :os.system_time(:millisecond)
@@ -79,7 +79,7 @@ defmodule HttpTest2.KVS do
     Accounts.sort_ids()
 
     time2 = :os.system_time(:millisecond)
-    Logger.info ">>> read_file #{time2 - time1} ms"
+    IO.puts ">>> read_file #{time2 - time1} ms"
 
     [now_time_str, type] = File.read!("priv/data/options.txt") |> String.split("\n")
     
@@ -88,7 +88,7 @@ defmodule HttpTest2.KVS do
       :error -> nil
     end
 
-    Logger.debug ">>> now_time=#{inspect now_time}"
+    IO.puts ">>> now_time=#{inspect now_time}"
 
 
     {:noreply, %{now_time: now_time, type: type}}
@@ -130,7 +130,7 @@ defmodule HttpTest2.KVS do
     end)
     |> Flow.run()
     time20 = :os.system_time(:millisecond)
-    Logger.debug ">>> json convert #{time20 - time10} ms"
+    IO.puts ">>> json convert #{time20 - time10} ms"
 
     # https://elixirforum.com/t/flow-stages-from-flow-map/16845
     time10 = :os.system_time(:millisecond)
@@ -160,7 +160,7 @@ defmodule HttpTest2.KVS do
     |> Flow.run()
 
     time20 = :os.system_time(:millisecond)
-    Logger.debug ">>> flow read #{time20 - time10} ms"
+    IO.puts ">>> flow read #{time20 - time10} ms"
 
   end
 

@@ -14,7 +14,7 @@ defmodule HttpTest2.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :plug, :cowboy],
+    [applications: [:cowboy],
      mod: {HttpTest2, []}]
   end
 
@@ -28,12 +28,14 @@ defmodule HttpTest2.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:plug, "~>1.3.4"},
+    [
+     {:cowboy, "~>2.6"},
+     # {:plug, "~>1.3.4"},
      # {:plug_cowboy, "~>1.0"},
-     {:cowboy, "~>1.1.2"},
-     {:poison, "~> 2.0"},
-     # {:eljiffy, "~> 1.1.0"},
-     {:jaxon, "~> 1.0"},
+     # {:cowboy, "~>1.1.2"},
+     # {:poison, "~> 2.0"},
+     {:eljiffy, "~> 1.1.0"},
+     # {:jaxon, "~> 1.0"},
      {:flow, "~> 0.14"},
      {:distillery, "~> 1.0"},
      {:exprof, "~> 0.2.3"},
