@@ -15,15 +15,9 @@ defmodule HttpTest2.Likes do
   end
 
   def set(_, nil), do: nil
-  def set(user_id, likes) do
-    {bin_likes, count} = likes
-    |> Enum.reduce({<<>>, 0}, fn(like, {bin_acc, count}) ->
-      id = like["id"]
-      ts = like["ts"]
-      {<< id :: 32, ts :: 32>> <> bin_acc, count + 1}
-    end)
+  def set(user_id, bin_likes) do
     true = :ets.insert(:likes, {user_id, bin_likes})
-    count
+    byte_size(bin_likes)
   end
 
   def get(user_id) do

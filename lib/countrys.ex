@@ -29,10 +29,11 @@ defmodule HttpTest2.Countrys do
 
   # callbacks 
 
-  def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
+  def handle_call({:name_to_id, win_name}, _, {new_id, trie} = state) do
+    name = Utils.win1251_to_unicode(win_name)
     case Retrieval.contains?(trie, name) do
       false ->
-        true = :ets.insert(:countrys, {new_id, Utils.unicode_to_win1251(name)})
+        true = :ets.insert(:countrys, {new_id, win_name})
         {:reply, new_id, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
       id ->
         {:reply, id, state}

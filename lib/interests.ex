@@ -53,10 +53,11 @@ defmodule HttpTest2.Interests do
   end
 
   def handle_call({:names_to_ids, names_list}, _, {new_id, trie} = state) do
-    {new_new_id, new_trie, result} = Enum.reduce(names_list, {new_id, trie, []}, fn(name, {acc_new_id, acc_trie, acc_res}) ->
+    {new_new_id, new_trie, result} = Enum.reduce(names_list, {new_id, trie, []}, fn(win_name, {acc_new_id, acc_trie, acc_res}) ->
+      name = Utils.win1251_to_unicode(win_name)
       case Retrieval.contains?(acc_trie, name) do
         false ->
-          true = :ets.insert(:interests, {acc_new_id, Utils.unicode_to_win1251(name)})
+          true = :ets.insert(:interests, {acc_new_id, win_name})
           {acc_new_id + 1, Retrieval.insert(acc_trie, name, acc_new_id), [acc_new_id] ++ acc_res}
         id ->
           {acc_new_id, acc_trie, [id] ++ acc_res}

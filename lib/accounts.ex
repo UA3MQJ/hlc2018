@@ -115,17 +115,14 @@ defmodule HttpTest2.Accounts do
     time1 = :os.system_time(:millisecond)
     new_id_list = id_list |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
     time2 = :os.system_time(:millisecond)
-    Logger.info ">>> sort_ids #{time2 - time1} ms"
 
     time1 = :os.system_time(:millisecond)
     new_sex_m = sex_m |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
     time2 = :os.system_time(:millisecond)
-    Logger.info ">>> sex_m #{time2 - time1} ms"
 
     time1 = :os.system_time(:millisecond)
     new_sex_f = sex_f |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
     time2 = :os.system_time(:millisecond)
-    Logger.info ">>> sex_f #{time2 - time1} ms"
 
     true = :ets.insert(:index, {:sort_ids, new_id_list})
     true = :ets.insert(:index, {:sex_m, new_sex_m})

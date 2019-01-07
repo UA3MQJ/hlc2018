@@ -106,26 +106,55 @@ defmodule HttpTest2.KVS do
     # Logger.debug ">>>> file_list=#{inspect file_list}"
 
 
+    time10 = :os.system_time(:millisecond)
+    file_list
+    |> Flow.from_enumerable(stages: 2, max_demand: 1)
+    |> Flow.flat_map(fn(json_file_name) ->
+        time1 = :os.system_time(:millisecond)
+        
+        file_name = String.slice(json_file_name, 0..-5) <> "bin"
+
+        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+
+        exit_status = receive do
+          {^port, {:exit_status, exit_status}} ->
+            #Port.close(port)
+            # Logger.debug ">>> exit_status 0"
+            exit_status
+        end
+        
+        send(port, {self(), :close})
+
+        [exit_status]
+    end)
+    |> Flow.run()
+    time20 = :os.system_time(:millisecond)
+    Logger.debug ">>> json convert #{time20 - time10} ms"
+
     # https://elixirforum.com/t/flow-stages-from-flow-map/16845
     time10 = :os.system_time(:millisecond)
 
+    # ------------------------------------------------------
+
     file_list
     |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    |> Flow.flat_map(fn(file_name) ->
+    |> Flow.flat_map(fn(json_file_name) ->
         time1 = :os.system_time(:millisecond)
         
-        # чтение файла кусками
+        file_name = String.slice(json_file_name, 0..-5) <> "bin"
+
+        # чтение файла 
         file_name
-        |> File.stream!([], 1000)
-        |> Jaxon.Stream.query([:root, "accounts", :all])
-        |> Enum.map(fn(user) ->
-          # Logger.debug ">>> uid=#{inspect uid}"
-          account_set(user)
-          # :ok
-        end)
+        {:ok, file} = File.open(file_name, [:read, :binary])
+        binary = IO.binread(file, :all)
+        File.close(file)
+
+        # Logger.debug ">>> file_name=#{inspect file_name} json_file_name=#{inspect json_file_name}"
+        parse_bin(binary)
 
         time2 = :os.system_time(:millisecond)
-        Logger.debug ">>> file file_name=#{inspect file_name} read #{time2 - time1} ms"
+        # Logger.debug ">>> file file_name=#{inspect file_name} read #{time2 - time1} ms"
         [file_name]
     end)
     |> Flow.run()
@@ -134,6 +163,99 @@ defmodule HttpTest2.KVS do
     Logger.debug ">>> flow read #{time20 - time10} ms"
 
   end
+
+  def parse_bin(<<>>), do: :ok
+  def parse_bin(binary) do
+        << id :: size(32), 
+           email_size :: size(8), email :: bytes-size(email_size), 
+           sname_size :: size(8), sname :: bytes-size(sname_size), 
+           fname_size :: size(8), fname :: bytes-size(fname_size), 
+           phone_size :: size(8), phone :: bytes-size(phone_size), 
+           sex :: size(8), 
+           birth :: size(32), 
+           country_size :: size(8), country :: bytes-size(country_size), 
+           city_size :: size(8), city :: bytes-size(city_size), 
+           joined :: size(32), 
+           status :: size(8), 
+           tail :: binary >> = binary
+            # account_set(user)
+
+        email = parse_str(email_size, email)
+        sname = parse_str(sname_size, sname)
+        fname = parse_str(fname_size, fname)
+        phone = parse_str(phone_size, phone)
+        sex = case sex==0 do
+          true -> :m
+          false -> :f
+        end
+        country = parse_str(country_size, country)
+        city = parse_str(city_size, city)
+
+        {interests, tail2} = parse_interests(tail)
+
+        << premium_start :: size(32),
+           premium_finish :: size(32), tail3 :: binary >> = tail2
+
+        premium_start = if premium_start==0, do: nil, else: premium_start
+        premium_finish = if premium_finish==0, do: nil, else: premium_finish
+
+        {likes, tail4} = parse_likes(tail3)
+
+        account = %{
+          id: id,
+          email: email, sname: sname, fname: fname,
+          phone: phone, sex: sex, country: country, city: city,
+          interests: interests, likes: likes,
+          status: status, birth: birth, joined: joined,
+          premium_start: premium_start, premium_finish: premium_finish
+        }
+        account_set_bin(account)
+
+        # # ---------------------------------------------------------
+        # u_email = email |> HttpTest2.Utils.win1251_to_unicode()
+        # u_sname = sname |> HttpTest2.Utils.win1251_to_unicode()
+        # u_fname = fname |> HttpTest2.Utils.win1251_to_unicode()
+        # u_phone = phone |> HttpTest2.Utils.win1251_to_unicode()
+        # u_country = country |> HttpTest2.Utils.win1251_to_unicode()
+        # u_city = city |> HttpTest2.Utils.win1251_to_unicode()
+
+
+        # u_interests = case interests do
+        #   nil -> nil
+        #   interests ->
+        #     Enum.map(interests, fn(win) ->
+        #       HttpTest2.Utils.win1251_to_unicode(win)
+        #     end)
+        # end
+
+        # # Logger.debug ">>>> email=#{inspect u_email} sname=#{inspect u_sname} fname=#{inspect u_fname} phone=#{inspect u_phone} sex=#{inspect sex} birth=#{inspect birth} country=#{inspect u_country} city=#{inspect u_city} joined=#{inspect joined}  status=#{inspect status}  interests=#{inspect u_interests}  premium_start=#{inspect premium_start}  premium_finish=#{inspect premium_finish} likes=#{inspect likes}"
+        # Logger.debug ">>>> id=#{inspect id}  likes=#{inspect likes}"
+    
+    parse_bin(tail4)
+  end
+  def parse_str(0, str), do: nil
+  def parse_str(_, str), do: str
+
+  def parse_interests(<<0 :: size(8), tail :: binary >>), do: {nil, tail}
+  def parse_interests(<<interests_count :: size(8), tail :: binary >>) do
+    _parse_interests([], interests_count, tail)
+  end
+  defp _parse_interests(arr, 0, tail), do: {arr, tail}
+  defp _parse_interests(arr, interests_count, tail) do
+    << interest_size :: size(8), interest :: bytes-size(interest_size), new_tail :: binary >> = tail
+    _parse_interests([interest] ++ arr, interests_count - 1, new_tail)
+  end
+
+  def parse_likes(<<0 :: size(8), tail :: binary >>), do: {nil, tail}
+  def parse_likes(<<likes_count :: size(8), tail :: binary >>) do
+    _parse_likes(<<>>, likes_count, tail)
+  end
+  defp _parse_likes(arr, 0, tail), do: {arr, tail}
+  defp _parse_likes(arr, likes_count, tail) do
+    << like :: bytes-size(8), new_tail :: binary >> = tail
+    _parse_likes(like <> arr, likes_count - 1, new_tail)
+  end
+
 
   def get_user(id) do
     case Accounts.get(id) do
@@ -159,7 +281,7 @@ defmodule HttpTest2.KVS do
           country: Countrys.id_to_name(country_id),
           city: Citys.id_to_name(city_id),
           joined: joined,
-          status: status,
+          status: untr_status(status),
           interests: Interests.ids_to_names(interests),
           premium: premium_val,
           likes: Likes.get(id)
@@ -170,6 +292,30 @@ defmodule HttpTest2.KVS do
   end
 
   # добавить пользователя без валидации
+  def account_set_bin(user) do
+    account = {
+      user[:id],
+      user[:email],
+      user[:sname],
+      user[:fname],
+      user[:phone],
+      user[:sex],
+      user[:birth],
+      Countrys.name_to_id(user[:country]),
+      Citys.name_to_id(user[:city]),
+      user[:joined],
+      user[:status],
+      Interests.names_to_ids(user[:interests]),
+      user[:premium_start],
+      user[:premium_finish],
+      Likes.set(user[:id], user[:likes])
+    }
+
+    Accounts.set(user[:id], account)
+
+    :ok
+  end
+
   def account_set(user) do
     account = {
       user["id"],

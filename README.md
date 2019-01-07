@@ -135,7 +135,7 @@ cd $GOPATH
 cd highloadcup_tester
 ./highloadcup_tester -addr http://127.0.0.1:8080 -hlcupdocs /home/sea/hlc2018_data/ -test -phase 1
 
- curl 'http://localhost:8080/accounts/filter/?interests_any=Компьютеры&query_id=2399&limit=6&sex_eq=m'
+ curl 'http://localhost:8080/accounts/filter/?interests_any=Компьютеры&query_id=2399&limit=6&sex_eq=m'  
 
 
 curl 'http://localhost:8080/accounts/filter/?interests_contains=Шопинг,Компьютеры,Мороженое&query_id=2395&limit=16&sex_eq=f'
@@ -164,5 +164,17 @@ curl 'http://localhost:8080/accounts/filter/?sex_eq=f&country_halcettokpytet=%D0
 line = IO.read(file, :line)
 result = (Poison.decode!(line))["result"]
 
+{:ok, file} = File.open("priv/data/accounts_1.json", [:read, :utf])
+line = IO.read(file, :all)
+accounts = (Poison.decode!(line))["accounts"]
+acc=Enum.map(accounts, fn(item) -> {item["id"], item} end) |> Enum.into(%{})
+
+{:ok, file} = File.open("priv/data/accounts_1.bin", [:read, :binary])
+binary = IO.binread(file, :all)
+<< id :: size(32) , fname_size :: size(8), fname :: bytes-size(fname_size), tail :: binary >> = binary
+fname |> HttpTest2.Utils.win1251_to_unicode()
 
 
+port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"}, [:binary, :stream, :exit_status, args: ["priv/data/accounts_1.json", "priv/data/accounts_1.bin"]])
+
+454904 json->bin

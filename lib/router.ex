@@ -13,70 +13,70 @@ defmodule Http_test2.Router do
   plug(:match)
   plug(:dispatch)
 
-  get "/accounts/filter/" do
-    params = conn.params
-    body = conn.body_params
-    # Logger.debug ">>>> conn=#{inspect conn}"
-    # Logger.debug ">>>> params=#{inspect params}"
-    # Logger.debug ">>>> body=#{inspect body}"
+  # get "/accounts/filter/" do
+  #   params = conn.params
+  #   body = conn.body_params
+  #   # Logger.debug ">>>> conn=#{inspect conn}"
+  #   # Logger.debug ">>>> params=#{inspect params}"
+  #   # Logger.debug ">>>> body=#{inspect body}"
 
-    result = KVS.filter(params)
+  #   result = KVS.filter(params)
 
-    case result do
-      :error ->
-        send_resp(conn, 400, "")
-      result ->
-        json = result
-        |> Poison.encode!()
+  #   case result do
+  #     :error ->
+  #       send_resp(conn, 400, "")
+  #     result ->
+  #       json = result
+  #       |> Poison.encode!()
 
-        send_resp(conn, 200, json)
-    end
-  end
+  #       send_resp(conn, 200, json)
+  #   end
+  # end
 
 
 
-  post "/accounts/new/" do
-    _params = conn.params
-    body = conn.body_params
-    # Logger.debug ">>>> params=#{inspect params}"
-    # Logger.debug ">>>> body=#{inspect body}"
+  # post "/accounts/new/" do
+  #   _params = conn.params
+  #   body = conn.body_params
+  #   # Logger.debug ">>>> params=#{inspect params}"
+  #   # Logger.debug ">>>> body=#{inspect body}"
 
-    case KVS.account_new(body) do
-      :ok -> send_resp(conn, 201, "{}")
-      :error -> send_resp(conn, 400, "")
-    end
-  end
+  #   case KVS.account_new(body) do
+  #     :ok -> send_resp(conn, 201, "{}")
+  #     :error -> send_resp(conn, 400, "")
+  #   end
+  # end
 
-  post "/accounts/likes/" do
-    _params = conn.params
-    body = conn.body_params
-    # Logger.debug ">>>> params=#{inspect params}"
-    # Logger.debug ">>>> body=#{inspect body}"
+  # post "/accounts/likes/" do
+  #   _params = conn.params
+  #   body = conn.body_params
+  #   # Logger.debug ">>>> params=#{inspect params}"
+  #   # Logger.debug ">>>> body=#{inspect body}"
 
-    case KVS.account_set_likes(body) do
-      :ok -> send_resp(conn, 202, "{}")
-      :error -> send_resp(conn, 400, "")
-    end
-  end
+  #   case KVS.account_set_likes(body) do
+  #     :ok -> send_resp(conn, 202, "{}")
+  #     :error -> send_resp(conn, 400, "")
+  #   end
+  # end
 
-  post "/accounts/:id/" do
-    _params = conn.params
-    body = conn.body_params
-    case Integer.parse(id) do
-      :error ->
-        send_resp(conn, 404, "")
-      {int_id, _} ->
-        case KVS.account_update(int_id, body) do
-          :ok -> send_resp(conn, 202, "{}")
-          :error -> send_resp(conn, 400, "")
-          :error_id -> send_resp(conn, 404, "")
-        end
-    end
-  end
+  # post "/accounts/:id/" do
+  #   _params = conn.params
+  #   body = conn.body_params
+  #   case Integer.parse(id) do
+  #     :error ->
+  #       send_resp(conn, 404, "")
+  #     {int_id, _} ->
+  #       case KVS.account_update(int_id, body) do
+  #         :ok -> send_resp(conn, 202, "{}")
+  #         :error -> send_resp(conn, 400, "")
+  #         :error_id -> send_resp(conn, 404, "")
+  #       end
+  #   end
+  # end
 
-  post "/test/:id/" do
-    send_resp(conn, 202, "{id:#{id}}")
-  end
+  # post "/test/:id/" do
+  #   send_resp(conn, 202, "{id:#{id}}")
+  # end
 
   match _ do
     params = conn.params
