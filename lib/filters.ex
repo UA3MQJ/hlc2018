@@ -32,13 +32,12 @@ defmodule HttpTest2.Filters do
     # Logger.debug ">>>> filter params=#{inspect params}"
     
     # result = []
-    limit_str = params["limit"] || "10"
+    limit_str = params["limit"] || "20"
     limit = case Integer.parse(limit_str) do
       {intVal, ""} -> intVal
       :error -> :error
     end
 
-    id_list = Accounts.get_id_list()
     now_time = Accounts.get_now_time()
 
     err_params_list = (Map.keys(params)) -- ["query_id", "limit", "sex_eq", "interests_any",
@@ -53,10 +52,13 @@ defmodule HttpTest2.Filters do
 
     params_is_valid? = !(limit==:error) and (length(err_params_list) == 0)
 
-    id_list = case params["sex_eq"] do
-      nil -> id_list
-      "m" -> Accounts.get_sex_m()
-      "f" -> Accounts.get_sex_f()
+    result_set = Accounts.get_id_list() 
+    fields = %{}
+
+    {result_set, fields} = case params["sex_eq"] do
+      nil -> {result_set, fields}
+      "m" -> {Accounts.get_sex_m(), Map.merge(fields,  %{:sex => :m})}
+      "f" -> {Accounts.get_sex_f(), Map.merge(fields,  %{:sex => :f})}
     end
     # if !params_is_valid? do
     #   Logger.debug ">>> err_params_list=#{inspect err_params_list}"
@@ -64,6 +66,11 @@ defmodule HttpTest2.Filters do
 
     case params_is_valid? do
       true ->
+        id_list = result_set
+        |> MapSet.to_list()
+        |> :lists.sort()
+        |> :lists.reverse()
+
         {result, _} = id_list
         |> Enum.reduce_while({[], limit}, fn(id, {a_list, a_limit} = acc) ->
 
@@ -111,6 +118,7 @@ defmodule HttpTest2.Filters do
               nresult_map = result_map
               |> Map.merge(%{id: id})
               |> Map.merge(%{email: email})
+              |> Map.merge(fields)
 
               new_limit = a_limit - 1
               case new_limit do
@@ -148,7 +156,6 @@ defmodule HttpTest2.Filters do
   def interests_any({%{"interests_any" => value} = params, account, map, break}) do
     interests_any = value
     |> String.split(",")
-    # |> Enum.map(fn(word) -> String.replace(word, "+", " ") end)
     |> MapSet.new()
     interests = :erlang.element(@interests, account)
     cond do
@@ -172,15 +179,16 @@ defmodule HttpTest2.Filters do
   def interests_contains({%{"interests_contains" => value} = params, account, map, break}) do
     interests_contains = value
     |> String.split(",")
-    # |> Enum.map(fn(word) -> String.replace(word, "+", " ") end)
     |> MapSet.new()
     interests = :erlang.element(@interests, account)
+
     cond do
       (interests==nil) ->
         @no_need_check
       true ->
         usr_interests = Interests.ids_to_names(interests)
         usr_interests_set = MapSet.new(usr_interests)
+
         match = MapSet.subset?(interests_contains, usr_interests_set)
         case match do
           true ->

@@ -124,9 +124,9 @@ defmodule HttpTest2.Accounts do
     new_sex_f = sex_f |> :lists.reverse() |> :lists.sort() |> :lists.reverse()
     time2 = :os.system_time(:millisecond)
 
-    true = :ets.insert(:index, {:sort_ids, new_id_list})
-    true = :ets.insert(:index, {:sex_m, new_sex_m})
-    true = :ets.insert(:index, {:sex_f, new_sex_f})
+    true = :ets.insert(:index, {:sort_ids, MapSet.new(new_id_list)})
+    true = :ets.insert(:index, {:sex_m, MapSet.new(new_sex_m)})
+    true = :ets.insert(:index, {:sex_f, MapSet.new(new_sex_f)})
     true = :ets.insert(:index, {:status, :ready})
 
     {:reply, :ok, {map, %{ids | id_list: new_id_list}, now}}

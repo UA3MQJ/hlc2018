@@ -14,17 +14,11 @@ defmodule AccountsFilterHandler do
     params = qs_vals
     |> Enum.into(%{})
 
-    # res = KVS.filter(params)
+    res = KVS.filter(params)
     # Logger.debug  ">>> res=#{inspect res}"
 
-    # body = Eljiffy.encode!(res)
-    body = "{}"
-
-    req1 = :cowboy_req.delete_resp_header("date", req0)
-
-    req = :cowboy_req.reply(200, %{"content-type" => "application/json", 
-      "connection" => "keep-alive"
-      }, body, req1)
+    body = Eljiffy.encode!(res)
+    req = :cowboy_req.reply(200, %{"content-type" => "application/json"}, body, req0)
 
     {:ok, req, opts}
   end

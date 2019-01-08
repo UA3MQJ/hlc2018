@@ -1,6 +1,5 @@
 rm -r -f _build
 rm -r -f  deps
-rm -f mix.lock
 
 docker build -t elixir .
 

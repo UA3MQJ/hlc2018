@@ -108,28 +108,28 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    # file_list
-    # |> Flow.from_enumerable(stages: 2, max_demand: 1)
-    # |> Flow.flat_map(fn(json_file_name) ->
-    #     time1 = :os.system_time(:millisecond)
+    file_list
+    |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    |> Flow.flat_map(fn(json_file_name) ->
+        time1 = :os.system_time(:millisecond)
         
-    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
+        file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-    #     exit_status = receive do
-    #       {^port, {:exit_status, exit_status}} ->
-    #         #Port.close(port)
-    #         # Logger.debug ">>> exit_status 0"
-    #         exit_status
-    #     end
+        exit_status = receive do
+          {^port, {:exit_status, exit_status}} ->
+            #Port.close(port)
+            # Logger.debug ">>> exit_status 0"
+            exit_status
+        end
         
-    #     send(port, {self(), :close})
+        send(port, {self(), :close})
 
-    #     [exit_status]
-    # end)
-    # |> Flow.run()
+        [exit_status]
+    end)
+    |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> json convert #{time20 - time10} ms"
@@ -139,27 +139,27 @@ defmodule HttpTest2.KVS do
     # https://elixirforum.com/t/flow-stages-from-flow-map/16845
     time10 = :os.system_time(:millisecond)
 
-    # file_list
-    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    # |> Flow.flat_map(fn(json_file_name) ->
-    #     time1 = :os.system_time(:millisecond)
+    file_list
+    |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    |> Flow.flat_map(fn(json_file_name) ->
+        time1 = :os.system_time(:millisecond)
         
-    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
+        file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-    #     # чтение файла 
-    #     file_name
-    #     {:ok, file} = File.open(file_name, [:read, :binary])
-    #     binary = IO.binread(file, :all)
-    #     File.close(file)
+        # чтение файла 
+        file_name
+        {:ok, file} = File.open(file_name, [:read, :binary])
+        binary = IO.binread(file, :all)
+        File.close(file)
 
-    #     # Logger.debug ">>> file_name=#{inspect file_name} json_file_name=#{inspect json_file_name}"
-    #     parse_bin(binary)
+        # Logger.debug ">>> file_name=#{inspect file_name} json_file_name=#{inspect json_file_name}"
+        parse_bin(binary)
 
-    #     time2 = :os.system_time(:millisecond)
-    #     # Logger.debug ">>> file file_name=#{inspect file_name} read #{time2 - time1} ms"
-    #     [file_name]
-    # end)
-    # |> Flow.run()
+        time2 = :os.system_time(:millisecond)
+        # Logger.debug ">>> file file_name=#{inspect file_name} read #{time2 - time1} ms"
+        [file_name]
+    end)
+    |> Flow.run()
 
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> flow read #{time20 - time10} ms"
