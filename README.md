@@ -178,3 +178,11 @@ fname |> HttpTest2.Utils.win1251_to_unicode()
 port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"}, [:binary, :stream, :exit_status, args: ["priv/data/accounts_1.json", "priv/data/accounts_1.bin"]])
 
 454904 json->bin
+
+curl --header "Content-Type: application/json"   --reque POST   --data '{"likes":[
+    {"likee": 3929, "ts": 1464869768, "liker": 3930}
+]}'   http://localhost:8080/accounts/filter/?query_id=500
+
+port = Port.open({:spawn_executable, "wrk"},    [:binary, :stream, :exit_status, args: ["-R1000", "-d10s", "-t16", "-c16", "--timeout", "10s", "-s", "./test/test2.lua", "http://127.0.0.1:8080"]])
+
+{res, _} = System.cmd("wrk", ["-R1000", "-d10s", "-t16", "-c16", "--timeout", "10s", "-s", "./test/wrk/test2.lua", "http://127.0.0.1:8080"])

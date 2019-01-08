@@ -14,7 +14,7 @@ defmodule HttpTest2.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:cowboy],
+    [applications: [:logger, :cowboy],
      mod: {HttpTest2, []}]
   end
 

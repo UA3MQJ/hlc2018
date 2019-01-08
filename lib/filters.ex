@@ -30,6 +30,7 @@ defmodule HttpTest2.Filters do
 
   def filter(params) do
     # Logger.debug ">>>> filter params=#{inspect params}"
+    
     # result = []
     limit_str = params["limit"] || "10"
     limit = case Integer.parse(limit_str) do

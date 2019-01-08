@@ -9,6 +9,7 @@ RUN apt-get update
 RUN apt-get install -y unzip
 RUN apt-get install -y tree
 RUN apt-get install -y qt5-default
+RUN apt-get install -y wrk
 RUN mix local.hex --force
 RUN mix local.rebar --force
 RUN mix deps.get
