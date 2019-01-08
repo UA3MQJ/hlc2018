@@ -7,9 +7,7 @@ RUN mkdir -p /app/priv
 RUN mkdir -p /app/priv/data
 RUN apt-get update
 RUN apt-get install -y unzip
-RUN apt-get install -y tree
 RUN apt-get install -y qt5-default
-RUN apt-get install -y wrk
 RUN ./jsonreadermake.sh
 RUN mix local.hex --force
 RUN mix local.rebar --force
