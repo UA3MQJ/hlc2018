@@ -186,3 +186,10 @@ curl --header "Content-Type: application/json"   --reque POST   --data '{"likes"
 port = Port.open({:spawn_executable, "wrk"},    [:binary, :stream, :exit_status, args: ["-R1000", "-d10s", "-t16", "-c16", "--timeout", "10s", "-s", "./test/test2.lua", "http://127.0.0.1:8080"]])
 
 {res, _} = System.cmd("wrk", ["-R1000", "-d10s", "-t16", "-c16", "--timeout", "10s", "-s", "./test/wrk/test2.lua", "http://127.0.0.1:8080"])
+
+
+curl 'http://localhost:8080/accounts/filter/?birth_year=1971&city_eq=Светлобург&status_neq=свободны&limit=22'
+
+:erlang.term_to_binary([1])
+:erts_debug.size([1])
+

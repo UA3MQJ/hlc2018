@@ -229,4 +229,26 @@ defmodule HttpTest2.Utils do
     result
   end
 
+  def int_to_list(int), do: int_to_list_(<< int :: size(32) >>)
+  defp int_to_list_(<< 0 :: size(8), 0 :: size(8) , 0 :: size(8) , 0 :: size(8) >>), do: []
+  defp int_to_list_(<< 0 :: size(8), 0 :: size(8) , 0 :: size(8) , d :: size(8) >>), do: [d]
+  defp int_to_list_(<< 0 :: size(8), 0 :: size(8) , c :: size(8) , d :: size(8) >>), do: [c, d]
+  defp int_to_list_(<< 0 :: size(8), b :: size(8) , c :: size(8) , d :: size(8) >>), do: [b, c, d]
+  defp int_to_list_(<< a :: size(8), b :: size(8) , c :: size(8) , d :: size(8) >>), do: [a, b, c, d]
+  
+  def list_to_int([]), do: 0
+  def list_to_int([d]), do: d
+  def list_to_int([c, d]) do
+    << int :: size(16) >> = << c :: size(8), d :: size(8) >>
+    int
+  end 
+  def list_to_int([b, c, d]) do
+    << int :: size(24) >> = << b :: size(8), c :: size(8), d :: size(8) >>
+    int
+  end 
+  def list_to_int([a, b, c, d]) do
+    << int :: size(32) >> = << a :: size(8), b :: size(8), c :: size(8), d :: size(8) >>
+    int
+  end 
+
 end
