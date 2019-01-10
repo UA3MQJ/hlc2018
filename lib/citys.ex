@@ -33,14 +33,14 @@ defmodule HttpTest2.Citys do
     name = Utils.win1251_to_unicode(win_name)
     case Retrieval.contains?(trie, name) do
       false ->
-        true = :ets.insert(:citys, {new_id, win_name})
+        true = :ets.insert(:citys, {new_id, :erlang.binary_to_list(win_name)})
         {:reply, new_id, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
       id ->
         {:reply, id, state}
     end
   end
 
-  def handle_call(:get_trie, _, {new_id, trie} = state) do
+  def handle_call(:get_trie, _, {_new_id, trie} = state) do
     {:reply, trie, state}
   end
 

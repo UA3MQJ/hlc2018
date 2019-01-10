@@ -45,7 +45,7 @@ defmodule HttpTest2.Interests do
   def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
     case Retrieval.contains?(trie, name) do
       false ->
-        true = :ets.insert(:interests, {new_id, Utils.unicode_to_win1251(name)})
+        true = :ets.insert(:interests, {new_id, Utils.unicode_to_win1251_list(name)})
         {:reply, new_id, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
       id ->
         {:reply, id, state}
@@ -57,7 +57,7 @@ defmodule HttpTest2.Interests do
       name = Utils.win1251_to_unicode(win_name)
       case Retrieval.contains?(acc_trie, name) do
         false ->
-          true = :ets.insert(:interests, {acc_new_id, win_name})
+          true = :ets.insert(:interests, {acc_new_id, Utils.unicode_to_win1251_list(name)})
           {acc_new_id + 1, Retrieval.insert(acc_trie, name, acc_new_id), [acc_new_id] ++ acc_res}
         id ->
           {acc_new_id, acc_trie, [id] ++ acc_res}

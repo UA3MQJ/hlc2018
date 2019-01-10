@@ -70,7 +70,7 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    # :observer.start()
+    :observer.start()
     # :timer.sleep(5000)
 
     time1 = :os.system_time(:millisecond)
@@ -90,6 +90,11 @@ defmodule HttpTest2.KVS do
 
     IO.puts ">>> now_time=#{inspect now_time}"
 
+    :erlang.processes()
+    |> Enum.map(fn(pid) ->
+      :erlang.garbage_collect(pid)
+    end)
+
 
     {:noreply, %{now_time: now_time, type: type}}
   end
@@ -108,31 +113,31 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    file_list
-    |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    |> Flow.flat_map(fn(json_file_name) ->
-        time1 = :os.system_time(:millisecond)
+    # file_list
+    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    # |> Flow.flat_map(fn(json_file_name) ->
+    #     time1 = :os.system_time(:millisecond)
         
-        file_name = String.slice(json_file_name, 0..-5) <> "bin"
+    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-        exit_status = receive do
-          {^port, {:exit_status, exit_status}} ->
-            #Port.close(port)
-            # Logger.debug ">>> exit_status 0"
-            exit_status
-        end
+    #     exit_status = receive do
+    #       {^port, {:exit_status, exit_status}} ->
+    #         #Port.close(port)
+    #         # Logger.debug ">>> exit_status 0"
+    #         exit_status
+    #     end
         
-        send(port, {self(), :close})
+    #     send(port, {self(), :close})
 
-        [exit_status]
-    end)
-    |> Flow.run()
+    #     [exit_status]
+    # end)
+    # |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
-    IO.puts ">>> json convert #{time20 - time10} ms"
+    IO.puts ">>> json->bin convert #{time20 - time10} ms"
 
     # ------------------------------------------------------
 
@@ -202,6 +207,13 @@ defmodule HttpTest2.KVS do
         premium_finish = if premium_finish==0, do: nil, else: premium_finish
 
         {likes, tail4} = parse_likes(tail3)
+
+        # email = nil
+        # sname = nil
+        # fname = nil
+        # phone = nil
+        # interests = nil
+        likes = nil
 
         account = %{
           id: id,
@@ -297,10 +309,10 @@ defmodule HttpTest2.KVS do
   def account_set_bin(user) do
     account = {
       user[:id],
-      user[:email],
-      user[:sname],
-      user[:fname],
-      user[:phone],
+      Utils.binary_to_list(user[:email]),
+      Utils.binary_to_list(user[:sname]),
+      Utils.binary_to_list(user[:fname]),
+      Utils.binary_to_list(user[:phone]),
       user[:sex],
       user[:birth],
       Countrys.name_to_id(user[:country]),
@@ -321,10 +333,10 @@ defmodule HttpTest2.KVS do
   def account_set(user) do
     account = {
       user["id"],
-      Utils.unicode_to_win1251(user["email"]),
-      Utils.unicode_to_win1251(user["sname"]),
-      Utils.unicode_to_win1251(user["fname"]),
-      Utils.unicode_to_win1251(user["phone"]),
+      Utils.unicode_to_win1251_list(user["email"]),
+      Utils.unicode_to_win1251_list(user["sname"]),
+      Utils.unicode_to_win1251_list(user["fname"]),
+      Utils.unicode_to_win1251_list(user["phone"]),
       tr_sex(user["sex"]),
       user["birth"],
       Countrys.name_to_id(user["country"]),
@@ -409,53 +421,5 @@ defmodule HttpTest2.KVS do
   defp untr_status(2), do: "заняты"
   defp untr_status(3), do: "всё сложно"
   defp untr_status(_), do: nil
-
-  def new_likes_is_valid(nil), do: :ok
-  def new_likes_is_valid(likes) do
-    result = likes
-    |> Enum.reduce_while(:ok, fn(like_item, _acc) ->
-      like_id = like_item["id"]
-      like_id_invalid = get_user(like_id) == []
-      ts_invalid = not(is_number(like_item["ts"]))
-      cond do
-        like_id==nil -> {:halt, :error}
-        like_id_invalid -> {:halt, :error}
-        ts_invalid -> {:halt, :error}
-      true ->
-        {:cont, :ok}
-      end
-    end)
-
-    # if result==:error do
-    #   Logger.debug ">>>>>> error likes=#{inspect likes}"
-    # end
-
-    result
-  end
-
-  def new_premium_is_valid(nil), do: :ok
-  def new_premium_is_valid(premium) when is_binary(premium), do: :error
-  def new_premium_is_valid(premium) when is_map(premium) do
-    premium_start = premium["start"]
-    premium_finish = premium["finish"]
-    result = cond do
-      premium_start == nil -> :error
-      premium_finish == nil -> :error
-      not(is_number(premium_start)) -> :error
-      not(is_number(premium_finish)) -> :error
-      true -> :ok
-    end
-
-    result
-  end
-
-  def validate_email(email) when is_binary(email) do
-    case Regex.run(~r/^[A-Za-z0-9._%+-+']+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/, email) do
-      nil ->
-        {:error, "Invalid email"}
-      _ ->
-        :ok
-    end
-  end
 
 end

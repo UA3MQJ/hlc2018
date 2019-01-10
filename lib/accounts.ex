@@ -26,6 +26,10 @@ defmodule HttpTest2.Accounts do
     {:ok, {%{}, ids, now_time}}
   end
 
+  def set_id(id) do
+    GenServer.cast(__MODULE__, {:set, id})
+  end
+
   def set(id, account) do
     true = :ets.insert(:accounts, account)
     GenServer.cast(__MODULE__, {:set, id})
@@ -96,16 +100,19 @@ defmodule HttpTest2.Accounts do
 
 
   def handle_cast({:set, id}, {map, %{id_list: id_list} = ids, now} = _state) do
+    true = :ets.insert(:index, {:status, :not_ready})
     new_id_list = [id] ++ id_list
     {:noreply, {map, %{ids | id_list: new_id_list}, now}}
   end
 
   def handle_cast({:set_sex_m, id}, {map, %{sex_m: sex_m} = ids, now} = _state) do
+    true = :ets.insert(:index, {:status, :not_ready})
     new_sex_m = [id] ++ sex_m
     {:noreply, {map, %{ids | sex_m: new_sex_m}, now}}
   end
 
   def handle_cast({:set_sex_f, id}, {map, %{sex_f: sex_f} = ids, now} = _state) do
+    true = :ets.insert(:index, {:status, :not_ready})
     new_sex_f = [id] ++ sex_f
     {:noreply, {map, %{ids | sex_f: new_sex_f}, now}}
   end

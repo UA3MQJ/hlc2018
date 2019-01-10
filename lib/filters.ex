@@ -52,7 +52,7 @@ defmodule HttpTest2.Filters do
 
     params_is_valid? = !(limit==:error) and (length(err_params_list) == 0)
 
-    result_set = Accounts.get_id_list() 
+    result_set = Accounts.get_id_list()
     fields = %{}
 
     {result_set, fields} = case params["sex_eq"] do
@@ -71,10 +71,15 @@ defmodule HttpTest2.Filters do
         |> :lists.sort()
         |> :lists.reverse()
 
+
         {result, _} = id_list
         |> Enum.reduce_while({[], limit}, fn(id, {a_list, a_limit} = acc) ->
 
           account = Accounts.get(id)
+
+          if account==nil do
+            Logger.debug ">>> id=#{inspect id} account=#{inspect account}"
+          end
 
           {^id, email_id, _sname, _fname, _phone_id, _sex,
              _birth, _country_id, _city_id, _joined, _status,
@@ -245,9 +250,8 @@ defmodule HttpTest2.Filters do
 
   def fname_eq({_, _, _, true} = t), do: t
   def fname_eq({%{"fname_eq" => value} = params, account, map, break}) do
-    fname_eq = Utils.unicode_to_win1251(value)
-
-    fname = :erlang.element(@fname, account)
+    fname_eq = value
+    fname = Utils.win1251_to_unicode(:erlang.element(@fname, account))
     cond do
       fname == nil -> @no_need_check
       (fname_eq==fname) ->
@@ -298,9 +302,9 @@ defmodule HttpTest2.Filters do
 
   def sname_eq({_, _, _, true} = t), do: t
   def sname_eq({%{"sname_eq" => value} = params, account, map, break}) do
-    sname_eq = Utils.unicode_to_win1251(value)
+    sname_eq = value
+    sname = Utils.win1251_to_unicode(:erlang.element(@sname, account))
 
-    sname = :erlang.element(@sname, account)
     cond do
       (sname_eq==sname) ->
         new_map = Map.merge(map, %{sname: value})

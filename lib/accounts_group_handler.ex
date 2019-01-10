@@ -1,4 +1,4 @@
-defmodule AccountsFilterHandler do
+defmodule AccountsGroupHandler do
   require Logger
   alias HttpTest2.KVS
 
@@ -14,19 +14,21 @@ defmodule AccountsFilterHandler do
     params = qs_vals
     |> Enum.into(%{})
 
-    case HttpTest2.Utils.filter_params_is_valid?(params) do
+    case HttpTest2.Utils.group_params_is_valid?(params) do
       # если левые поля в запросе 400
       false ->
-        # Logger.debug ">>> AccountsFilterHandler"
+        # Logger.debug ">>> AccountsGroupHandler"
         req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
         {:ok, req, opts}
       true ->
-        res = KVS.filter(params)
+        res = %{groups: []}
+
         body = Eljiffy.encode!(res)
         req = :cowboy_req.reply(200, %{"content-type" => "application/json"}, body, req0)
 
         {:ok, req, opts}
     end
+
   end
 
 end

@@ -13,6 +13,14 @@ defmodule HttpTest2 do
       {:_,
        [
          {"/accounts/filter", AccountsFilterHandler, []},
+         {"/accounts/group", AccountsGroupHandler, []},
+         {"/accounts/new", AccountsNewHandler, []},
+         {"/accounts/likes", AccountsLikesHandler, []},
+         {"/accounts/:id/recommend", AccountsRecommendHandler, []},
+         {"/accounts/:id/suggest", AccountsSuggestHandler, []},
+         {"/accounts/:id", AccountsUpdateHandler, []},
+
+
          {:_, ErrorHandler, []}
        ]}
     ])
