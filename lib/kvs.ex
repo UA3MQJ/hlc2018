@@ -215,6 +215,10 @@ defmodule HttpTest2.KVS do
         # interests = nil
         likes = nil
 
+        # все поля при отдаче в хранилище должны быть в unicode
+        # и ответы тоже
+        city = city |> Utils.win1251_to_unicode()
+
         account = %{
           id: id,
           email: email, sname: sname, fname: fname,

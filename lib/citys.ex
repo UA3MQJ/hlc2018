@@ -11,7 +11,7 @@ defmodule HttpTest2.Citys do
     # Logger.info ">>> citys init"
     :ets.new(:citys, [:named_table, :public, :ordered_set, {:keypos, 1}])
 
-    {:ok, {1, :sets.new()}}
+    {:ok, {1, :gb_trees.empty()}}
   end
 
   def name_to_id(nil),  do: nil
@@ -21,7 +21,7 @@ defmodule HttpTest2.Citys do
   def id_to_name(id) do
     case :ets.lookup(:citys, id) do
       [] -> nil
-      [{^id, name}] -> Utils.win1251_to_unicode(name)
+      [{^id, name}] -> Utils.numstr_to_str(name)
     end
   end
   
@@ -29,13 +29,19 @@ defmodule HttpTest2.Citys do
 
   # callbacks 
 
-  def handle_call({:name_to_id, win_name}, _, {new_id, trie} = state) do
-    name = Utils.win1251_to_unicode(win_name)
-    case :sets.is_element(name, trie) do
-      false ->
-        true = :ets.insert(:citys, {new_id, :erlang.binary_to_list(win_name)})
-        {:reply, new_id, {new_id + 1, :sets.add_element(name, trie)}}
-      id ->
+  def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
+    # Logger.debug ">>>> win_name=#{inspect win_name}"
+
+    list_name = :erlang.binary_to_list(name)
+    numstr_name = Utils.str_to_numstr(name)
+    # case :sets.is_element(name, trie) do
+    case :gb_trees.take_any(numstr_name, trie) do
+      # false ->
+      :error ->
+        true = :ets.insert(:citys, {new_id, numstr_name})
+        {:reply, new_id, {new_id + 1, :gb_trees.enter(numstr_name, new_id, trie)}}
+      # id ->
+      {id, _} ->
         {:reply, id, state}
     end
   end

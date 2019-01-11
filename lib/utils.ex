@@ -251,4 +251,29 @@ defmodule HttpTest2.Utils do
     int
   end
 
+  def str_to_numstr(nil), do: nil
+  def str_to_numstr(""), do: 0
+  def str_to_numstr(str), do: str_to_number_(unicode_to_win1251_list(str))
+  defp str_to_number_(list) do
+    bin = str_to_number__(list, <<>>)
+    sz = :erlang.byte_size(bin) * 8
+    << num :: size(sz) >> = bin
+    num
+  end
+  defp str_to_number__([h|t], bin), do: str_to_number__(t, << h :: size(8)>> <> bin)
+  defp str_to_number__([], bin), do: bin
+
+  def numstr_to_str(nil), do: nil
+  def numstr_to_str(0), do: ""
+  def numstr_to_str(num) do
+    list = number_to_str_(num, [])
+    win1251_to_unicode(:lists.reverse(list))
+  end
+  defp number_to_str_(0, list), do: list
+  defp number_to_str_(num, list) do
+    rem = rem(num, 256)
+    new_num = div(num, 256)
+    number_to_str_(new_num, [rem] ++ list)
+  end
+
 end
