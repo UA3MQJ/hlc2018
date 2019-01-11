@@ -118,7 +118,7 @@ defmodule HttpTest2.Filters do
           case result_map do
             nil -> {:cont, acc}
             _ ->
-              email = Utils.win1251_to_unicode(email_id)
+              email = Utils.numstr_to_str(email_id)
               # Logger.debug ">>>> result_map=#{inspect result_map}"
               nresult_map = result_map
               |> Map.merge(%{id: id})
@@ -251,7 +251,7 @@ defmodule HttpTest2.Filters do
   def fname_eq({_, _, _, true} = t), do: t
   def fname_eq({%{"fname_eq" => value} = params, account, map, break}) do
     fname_eq = value
-    fname = Utils.win1251_to_unicode(:erlang.element(@fname, account))
+    fname = Utils.numstr_to_str(:erlang.element(@fname, account))
     cond do
       fname == nil -> @no_need_check
       (fname_eq==fname) ->
@@ -266,7 +266,7 @@ defmodule HttpTest2.Filters do
   def fname_any({_, _, _, true} = t), do: t
   def fname_any({%{"fname_any" => value} = params, account, map, break}) do
     fname_any = value |> String.split(",") |> MapSet.new()
-    fname = Utils.win1251_to_unicode(:erlang.element(@fname, account))
+    fname = Utils.numstr_to_str(:erlang.element(@fname, account))
     cond do
       (fname in fname_any) ->
         new_map = Map.merge(map, %{fname: fname})
@@ -279,7 +279,7 @@ defmodule HttpTest2.Filters do
 
   def fname_null({_, _, _, true} = t), do: t
   def fname_null({%{"fname_null" => value} = params, account, map, break}) do
-    fname = Utils.win1251_to_unicode(:erlang.element(@fname, account))
+    fname = Utils.numstr_to_str(:erlang.element(@fname, account))
     case value do
       # если указано
       "0" ->
@@ -303,7 +303,7 @@ defmodule HttpTest2.Filters do
   def sname_eq({_, _, _, true} = t), do: t
   def sname_eq({%{"sname_eq" => value} = params, account, map, break}) do
     sname_eq = value
-    sname = Utils.win1251_to_unicode(:erlang.element(@sname, account))
+    sname = Utils.numstr_to_str(:erlang.element(@sname, account))
 
     cond do
       (sname_eq==sname) ->
@@ -319,7 +319,7 @@ defmodule HttpTest2.Filters do
   def sname_starts({%{"sname_starts" => value} = params, account, map, break}) do
     sname_starts = value
 
-    sname = Utils.win1251_to_unicode(:erlang.element(@sname, account))
+    sname = Utils.numstr_to_str(:erlang.element(@sname, account))
     sl_sname = String.slice(sname, 0..(String.length(sname_starts)-1))
 
     cond do
@@ -335,7 +335,7 @@ defmodule HttpTest2.Filters do
 
   def sname_null({_, _, _, true} = t), do: t
   def sname_null({%{"sname_null" => value} = params, account, map, break}) do
-    sname = Utils.win1251_to_unicode(:erlang.element(@sname, account))
+    sname = Utils.numstr_to_str(:erlang.element(@sname, account))
     case value do
       # если указано
       "0" ->
@@ -450,7 +450,7 @@ defmodule HttpTest2.Filters do
   def phone_code({%{"phone_code" => value} = params, account, map, break}) do
     phone_code = value
 
-    phone = Utils.win1251_to_unicode(:erlang.element(@phone_id, account))
+    phone = Utils.numstr_to_str(:erlang.element(@phone_id, account))
     code = case phone do
       nil -> nil
       phone -> phone |> String.split("(") |> tl() |> hd |> String.split(")")|> hd
@@ -469,7 +469,7 @@ defmodule HttpTest2.Filters do
 
   def phone_null({_, _, _, true} = t), do: t
   def phone_null({%{"phone_null" => value} = params, account, map, break}) do
-    phone = Utils.win1251_to_unicode(:erlang.element(@phone_id, account))
+    phone = Utils.numstr_to_str(:erlang.element(@phone_id, account))
     case value do
       # если указано
       "0" ->
@@ -494,7 +494,7 @@ defmodule HttpTest2.Filters do
   def email_domain({%{"email_domain" => value} = params, account, map, break}) do
     email_domain = value
 
-    email = Utils.win1251_to_unicode(:erlang.element(@email_id, account))
+    email = Utils.numstr_to_str(:erlang.element(@email_id, account))
 
     domain = case email do
       nil -> nil
@@ -519,7 +519,7 @@ defmodule HttpTest2.Filters do
   def email_lt({%{"email_lt" => value} = params, account, map, break}) do
     email_lt = value
 
-    email = Utils.win1251_to_unicode(:erlang.element(@email_id, account))
+    email = Utils.numstr_to_str(:erlang.element(@email_id, account))
    
     cond do
       email == nil ->
@@ -537,7 +537,7 @@ defmodule HttpTest2.Filters do
   def email_gt({%{"email_gt" => value} = params, account, map, break}) do
     email_gt = value
 
-    email = Utils.win1251_to_unicode(:erlang.element(@email_id, account))
+    email = Utils.numstr_to_str(:erlang.element(@email_id, account))
    
     cond do
       email == nil ->

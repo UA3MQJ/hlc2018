@@ -95,7 +95,8 @@ curl --header "Content-Type: application/json"   --reque POST   --data '{"likes"
 
 HttpTest2.KVS.account(3929)[:likes]
 
-HttpTest2.KVS.account(1021)
+HttpTest2.KVS.account(1021)curl 'http://localhost:8080/accounts/filter/?interests_any=Компьютеры&query_id=2399&limit=6&sex_eq=m'
+
 curl --header "Content-Type: application/json"   --reque POST   --data '{
   "sname": "Данленло",
   "status": "свободны",
@@ -190,8 +191,11 @@ port = Port.open({:spawn_executable, "wrk"},    [:binary, :stream, :exit_status,
 
 curl 'http://localhost:8080/accounts/filter/?birth_year=1971&city_eq=Светлобург&status_neq=свободны&limit=22'
 
- [] |> :erlang.term_to_binary() |> :erts_debug.size()
-
+ [] |> :erts_debug.size() - как оно занимает в куче этого процесса с оптимизацией
+ [] |> :erts_debug.flat_size() - размер без оптимизации 
+в словах!!!
 
 list = for n <- 1..1000_000, do: n
+
+:ets.info(:accounts, :memory) * :erlang.system_info(:wordsize)
 

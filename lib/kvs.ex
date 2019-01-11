@@ -70,7 +70,7 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    :observer.start()
+    # :observer.start()
     # :timer.sleep(5000)
 
     time1 = :os.system_time(:millisecond)
@@ -95,8 +95,26 @@ defmodule HttpTest2.KVS do
       :erlang.garbage_collect(pid)
     end)
 
+    IO.puts "* System info *"
+    :erlang.memory
+    |> Enum.map(fn({k,v}) ->
+      IO.puts " - #{inspect k} - #{inspect v}"
+    end)
+
+    IO.puts "* ETS info *"
+    table_stat(:accounts)
+    table_stat(:citys)
+    table_stat(:countrys)
+    table_stat(:interests)
+    table_stat(:likes)
 
     {:noreply, %{now_time: now_time, type: type}}
+  end
+
+  defp table_stat(name) do
+    size = :ets.info(name, :memory) * :erlang.system_info(:wordsize)
+    rows = :ets.info(name, :size)
+    IO.puts " - table #{inspect name} rows #{inspect rows} size #{inspect size} bytes"
   end
 
     # :erlang.processes()
@@ -113,28 +131,31 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    # file_list
-    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    # |> Flow.flat_map(fn(json_file_name) ->
-    #     time1 = :os.system_time(:millisecond)
+    file_list
+    |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    |> Flow.flat_map(fn(json_file_name) ->
+        time1 = :os.system_time(:millisecond)
         
-    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
+        file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-    #     exit_status = receive do
-    #       {^port, {:exit_status, exit_status}} ->
-    #         #Port.close(port)
-    #         # Logger.debug ">>> exit_status 0"
-    #         exit_status
-    #     end
+        exit_status = receive do
+          {^port, {:exit_status, exit_status}} ->
+            #Port.close(port)
+            # Logger.debug ">>> exit_status 0"
+            exit_status
+        end
         
-    #     send(port, {self(), :close})
+        send(port, {self(), :close})
 
-    #     [exit_status]
-    # end)
-    # |> Flow.run()
+        time2 = :os.system_time(:millisecond)
+        # Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
+
+        [exit_status]
+    end)
+    |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> json->bin convert #{time20 - time10} ms"
@@ -161,7 +182,8 @@ defmodule HttpTest2.KVS do
         parse_bin(binary)
 
         time2 = :os.system_time(:millisecond)
-        # Logger.debug ">>> file file_name=#{inspect file_name} read #{time2 - time1} ms"
+        # Logger.debug ">>> bin file file_name=#{inspect file_name} read #{time2 - time1} ms"
+
         [file_name]
     end)
     |> Flow.run()
@@ -219,6 +241,11 @@ defmodule HttpTest2.KVS do
         # и ответы тоже
         city = city |> Utils.win1251_to_unicode()
         country = country |> Utils.win1251_to_unicode()
+
+        email = email |> Utils.win1251_to_unicode()
+        sname = sname |> Utils.win1251_to_unicode()
+        fname = fname |> Utils.win1251_to_unicode()
+        phone = phone |> Utils.win1251_to_unicode()
 
         account = %{
           id: id,
@@ -291,10 +318,10 @@ defmodule HttpTest2.KVS do
 
         %{
           id: id,
-          email: Utils.win1251_to_unicode(email),
-          sname: Utils.win1251_to_unicode(sname),
-          fname: Utils.win1251_to_unicode(fname),
-          phone: Utils.win1251_to_unicode(phone),
+          email: Utils.numstr_to_str(email),
+          sname: Utils.numstr_to_str(sname),
+          fname: Utils.numstr_to_str(fname),
+          phone: Utils.numstr_to_str(phone),
           sex: sex,
           birth: birth,
           country: Countrys.id_to_name(country_id),
@@ -314,10 +341,10 @@ defmodule HttpTest2.KVS do
   def account_set_bin(user) do
     account = {
       user[:id],
-      Utils.binary_to_list(user[:email]),
-      Utils.binary_to_list(user[:sname]),
-      Utils.binary_to_list(user[:fname]),
-      Utils.binary_to_list(user[:phone]),
+      Utils.str_to_numstr(user[:email]),
+      Utils.str_to_numstr(user[:sname]),
+      Utils.str_to_numstr(user[:fname]),
+      Utils.str_to_numstr(user[:phone]),
       user[:sex],
       user[:birth],
       Countrys.name_to_id(user[:country]),
