@@ -11,7 +11,7 @@ defmodule HttpTest2.Countrys do
     # Logger.info ">>> countrys init"
     :ets.new(:countrys, [:named_table, :public, :ordered_set, {:keypos, 1}])
 
-    {:ok, {1, Retrieval.new(with_id: true)}}
+    {:ok, {1, :gb_trees.empty()}}
   end
 
   def name_to_id(nil),  do: nil
@@ -21,7 +21,7 @@ defmodule HttpTest2.Countrys do
   def id_to_name(id) do
     case :ets.lookup(:countrys, id) do
       [] -> nil
-      [{^id, name}] -> Utils.win1251_to_unicode(name)
+      [{^id, name}] -> Utils.numstr_to_str(name)
     end
   end
   
@@ -29,13 +29,13 @@ defmodule HttpTest2.Countrys do
 
   # callbacks 
 
-  def handle_call({:name_to_id, win_name}, _, {new_id, trie} = state) do
-    name = Utils.win1251_to_unicode(win_name)
-    case Retrieval.contains?(trie, name) do
-      false ->
-        true = :ets.insert(:countrys, {new_id, :erlang.binary_to_list(win_name)})
-        {:reply, new_id, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
-      id ->
+  def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
+    numstr_name = Utils.str_to_numstr(name)
+    case :gb_trees.take_any(numstr_name, trie) do
+      :error ->
+        true = :ets.insert(:countrys, {new_id, numstr_name})
+        {:reply, new_id, {new_id + 1, :gb_trees.enter(numstr_name, new_id, trie)}}
+      {id, _} ->
         {:reply, id, state}
     end
   end

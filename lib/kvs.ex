@@ -218,6 +218,7 @@ defmodule HttpTest2.KVS do
         # все поля при отдаче в хранилище должны быть в unicode
         # и ответы тоже
         city = city |> Utils.win1251_to_unicode()
+        country = country |> Utils.win1251_to_unicode()
 
         account = %{
           id: id,

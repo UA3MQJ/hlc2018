@@ -31,16 +31,11 @@ defmodule HttpTest2.Citys do
 
   def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
     # Logger.debug ">>>> win_name=#{inspect win_name}"
-
-    list_name = :erlang.binary_to_list(name)
     numstr_name = Utils.str_to_numstr(name)
-    # case :sets.is_element(name, trie) do
     case :gb_trees.take_any(numstr_name, trie) do
-      # false ->
       :error ->
         true = :ets.insert(:citys, {new_id, numstr_name})
         {:reply, new_id, {new_id + 1, :gb_trees.enter(numstr_name, new_id, trie)}}
-      # id ->
       {id, _} ->
         {:reply, id, state}
     end
