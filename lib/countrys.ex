@@ -9,7 +9,7 @@ defmodule HttpTest2.Countrys do
 
   def init(_) do
     # Logger.info ">>> countrys init"
-    :ets.new(:countrys, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:countrys, [:named_table, :public, :ordered_set, {:keypos, 1}])
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

@@ -9,7 +9,7 @@ defmodule HttpTest2.Interests do
 
   def init(_) do
     # Logger.info ">>> interests init"
-    :ets.new(:interests, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:interests, [:named_table, :public, :ordered_set, {:keypos, 1}])
 
     {:ok, {1, Retrieval.new(with_id: true)}}
   end

@@ -9,9 +9,9 @@ defmodule HttpTest2.Citys do
 
   def init(_) do
     # Logger.info ">>> citys init"
-    :ets.new(:citys, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:citys, [:named_table, :public, :ordered_set, {:keypos, 1}])
 
-    {:ok, {1, Retrieval.new(with_id: true)}}
+    {:ok, {1, :sets.new()}}
   end
 
   def name_to_id(nil),  do: nil
@@ -31,10 +31,10 @@ defmodule HttpTest2.Citys do
 
   def handle_call({:name_to_id, win_name}, _, {new_id, trie} = state) do
     name = Utils.win1251_to_unicode(win_name)
-    case Retrieval.contains?(trie, name) do
+    case :sets.is_element(name, trie) do
       false ->
         true = :ets.insert(:citys, {new_id, :erlang.binary_to_list(win_name)})
-        {:reply, new_id, {new_id + 1, Retrieval.insert(trie, name, new_id)}}
+        {:reply, new_id, {new_id + 1, :sets.add_element(name, trie)}}
       id ->
         {:reply, id, state}
     end

@@ -9,8 +9,8 @@ defmodule HttpTest2.Accounts do
 
   def init(_) do
     # Logger.info ">>> accounts init"
-    :ets.new(:accounts, [:named_table, :public, :set, {:keypos, 1}])
-    :ets.new(:index, [:named_table, :public, :set, {:keypos, 1}])
+    :ets.new(:accounts, [:named_table, :public, :ordered_set, {:keypos, 1}])
+    :ets.new(:index, [:named_table, :public, :ordered_set, {:keypos, 1}])
 
     true = :ets.insert(:index, {:status, :not_ready})
 

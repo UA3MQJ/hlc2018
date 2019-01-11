@@ -190,6 +190,8 @@ port = Port.open({:spawn_executable, "wrk"},    [:binary, :stream, :exit_status,
 
 curl 'http://localhost:8080/accounts/filter/?birth_year=1971&city_eq=Светлобург&status_neq=свободны&limit=22'
 
-:erlang.term_to_binary([1])
-:erts_debug.size([1])
+ [] |> :erlang.term_to_binary() |> :erts_debug.size()
+
+
+list = for n <- 1..1000_000, do: n
 
