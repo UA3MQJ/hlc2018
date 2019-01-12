@@ -30,10 +30,10 @@ defmodule HttpTest2 do
 
     {:ok, _} = :cowboy.start_clear(
       :my_http_listener,
-      [{:port, port}],
+      [{:port, port}, {:num_acceptors, 100}],
       %{:env => %{:dispatch => dispatch},
         :max_connections => :infinity,
-        :num_acceptors => 10,
+        # :num_acceptors => 5,
         :idle_timeout => 600_001,
         :max_keepalive => 500_000 }
     )
