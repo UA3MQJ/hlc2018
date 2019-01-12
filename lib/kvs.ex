@@ -108,6 +108,10 @@ defmodule HttpTest2.KVS do
     table_stat(:interests)
     table_stat(:likes)
 
+    # отключить логгер
+    # Logger.remove_backend(:console)
+    # Logger.add_backend(:console)
+
     {:noreply, %{now_time: now_time, type: type}}
   end
 
@@ -131,31 +135,31 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    file_list
-    |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    |> Flow.flat_map(fn(json_file_name) ->
-        time1 = :os.system_time(:millisecond)
+    # file_list
+    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    # |> Flow.flat_map(fn(json_file_name) ->
+    #     time1 = :os.system_time(:millisecond)
         
-        file_name = String.slice(json_file_name, 0..-5) <> "bin"
+    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-        exit_status = receive do
-          {^port, {:exit_status, exit_status}} ->
-            #Port.close(port)
-            # Logger.debug ">>> exit_status 0"
-            exit_status
-        end
+    #     exit_status = receive do
+    #       {^port, {:exit_status, exit_status}} ->
+    #         #Port.close(port)
+    #         # Logger.debug ">>> exit_status 0"
+    #         exit_status
+    #     end
         
-        send(port, {self(), :close})
+    #     send(port, {self(), :close})
 
-        time2 = :os.system_time(:millisecond)
-        # Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
+    #     time2 = :os.system_time(:millisecond)
+    #     # Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
 
-        [exit_status]
-    end)
-    |> Flow.run()
+    #     [exit_status]
+    # end)
+    # |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> json->bin convert #{time20 - time10} ms"

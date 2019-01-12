@@ -5,6 +5,7 @@ defmodule HttpTest2.Mixfile do
     [app: :http_test2,
      version: "0.1.0",
      elixir: "~> 1.6",
+     compilers: [:elixir_make] ++ Mix.compilers(),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps()]
@@ -39,6 +40,7 @@ defmodule HttpTest2.Mixfile do
      {:flow, "~> 0.14"},
      {:distillery, "~> 1.0"},
      {:exprof, "~> 0.2.3"},
+     {:elixir_make, "~> 0.4", runtime: false},
      {:retrieval, git: "https://github.com/UA3MQJ/retrieval.git"},
     ]
   end

@@ -199,3 +199,7 @@ list = for n <- 1..1000_000, do: n
 
 :ets.info(:accounts, :memory) * :erlang.system_info(:wordsize)
 
+Выключить/включить логгер. Если мешают ошибки уровня :error
+   Logger.remove_backend(:console)
+   Logger.add_backend(:console)
+

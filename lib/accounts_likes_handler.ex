@@ -17,7 +17,7 @@ defmodule AccountsLikesHandler do
     case HttpTest2.Utils.likes_params_is_valid?(params) do
       # если левые поля в запросе 400
       false ->
-        Logger.debug ">>> AccountsLikesHandler"
+        # Logger.debug ">>> AccountsLikesHandler"
 
         req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
         {:ok, req, opts}

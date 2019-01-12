@@ -77,9 +77,9 @@ defmodule HttpTest2.Filters do
 
           account = Accounts.get(id)
 
-          if account==nil do
-            Logger.debug ">>> id=#{inspect id} account=#{inspect account}"
-          end
+          # if account==nil do
+          #   Logger.debug ">>> id=#{inspect id} account=#{inspect account}"
+          # end
 
           {^id, email_id, _sname, _fname, _phone_id, _sex,
              _birth, _country_id, _city_id, _joined, _status,
