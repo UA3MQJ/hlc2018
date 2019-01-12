@@ -32,12 +32,12 @@ defmodule HttpTest2.Accounts do
 
   def set(id, account) do
     true = :ets.insert(:accounts, account)
-    GenServer.cast(__MODULE__, {:set, id})
-    sex = :erlang.element(6, account)
-    case sex do
-      :m -> GenServer.cast(__MODULE__, {:set_sex_m, id})
-      :f -> GenServer.cast(__MODULE__, {:set_sex_f, id})
-    end
+    # GenServer.cast(__MODULE__, {:set, id})
+    # sex = :erlang.element(6, account)
+    # case sex do
+    #   :m -> GenServer.cast(__MODULE__, {:set_sex_m, id})
+    #   :f -> GenServer.cast(__MODULE__, {:set_sex_f, id})
+    # end
   end
 
 

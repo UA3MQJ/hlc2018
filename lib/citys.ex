@@ -8,41 +8,39 @@ defmodule HttpTest2.Citys do
   end
 
   def init(_) do
-    # Logger.info ">>> citys init"
     :ets.new(:citys, [:named_table, :public, :ordered_set, {:keypos, 1}])
-
+    :ets.new(:citys_inv, [:named_table, :public, :ordered_set, {:keypos, 1}])
+    :ets.new(:citys_id_gen, [:named_table, :public, :ordered_set, {:keypos, 1}])
+    true = :ets.insert(:citys_id_gen, {:id, 0})
     {:ok, {1, :gb_trees.empty()}}
   end
 
   def name_to_id(nil),  do: nil
-  def name_to_id(name), do: GenServer.call(__MODULE__, {:name_to_id, name})
+  def name_to_id(name) do
+    numstr_name = Utils.str_to_numstr(name)
+    case :ets.lookup(:citys_inv, numstr_name) do
+      [] -> # если такого еще нет
+        # генерим новый ИД
+        new_id = :ets.update_counter(:citys_id_gen, :id, {2, 1})
+        # может уже кто-то добавил
+        case :ets.insert_new(:citys_inv, {numstr_name, new_id}) do
+          true ->
+            true = :ets.insert(:citys, {new_id, numstr_name})
+            new_id
+          false -> # кто-то уже успел добавить
+            [{^numstr_name, id}] = :ets.lookup(:citys_inv, numstr_name) # читаем полученный ИД (не факт, что наш)
+            id
+        end        
+      [{^numstr_name, id}] -> id
+    end
+  end
 
   def id_to_name(nil), do: nil
   def id_to_name(id) do
     case :ets.lookup(:citys, id) do
       [] -> nil
-      [{^id, name}] -> Utils.numstr_to_str(name)
+      [{^id, numstr_name}] -> Utils.numstr_to_str(numstr_name)
     end
   end
   
-  def get_trie(), do: GenServer.call(__MODULE__, :get_trie)
-
-  # callbacks 
-
-  def handle_call({:name_to_id, name}, _, {new_id, trie} = state) do
-    # Logger.debug ">>>> win_name=#{inspect win_name}"
-    numstr_name = Utils.str_to_numstr(name)
-    case :gb_trees.take_any(numstr_name, trie) do
-      :error ->
-        true = :ets.insert(:citys, {new_id, numstr_name})
-        {:reply, new_id, {new_id + 1, :gb_trees.enter(numstr_name, new_id, trie)}}
-      {id, _} ->
-        {:reply, id, state}
-    end
-  end
-
-  def handle_call(:get_trie, _, {_new_id, trie} = state) do
-    {:reply, trie, state}
-  end
-
 end

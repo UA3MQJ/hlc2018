@@ -104,8 +104,11 @@ defmodule HttpTest2.KVS do
     IO.puts "* ETS info *"
     table_stat(:accounts)
     table_stat(:citys)
+    table_stat(:citys_inv)
     table_stat(:countrys)
+    table_stat(:countrys_inv)
     table_stat(:interests)
+    table_stat(:interests_inv)
     table_stat(:likes)
 
     # отключить логгер
@@ -293,7 +296,8 @@ defmodule HttpTest2.KVS do
   defp _parse_interests(arr, 0, tail), do: {arr, tail}
   defp _parse_interests(arr, interests_count, tail) do
     << interest_size :: size(8), interest :: bytes-size(interest_size), new_tail :: binary >> = tail
-    _parse_interests([interest] ++ arr, interests_count - 1, new_tail)
+    unicode_interest = Utils.win1251_to_unicode(interest)
+    _parse_interests([unicode_interest] ++ arr, interests_count - 1, new_tail)
   end
 
   def parse_likes(<<0 :: size(8), tail :: binary >>), do: {nil, tail}
