@@ -70,7 +70,7 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    # :observer.start()
+    :observer.start()
     # :timer.sleep(5000)
 
     time1 = :os.system_time(:millisecond)
@@ -110,9 +110,12 @@ defmodule HttpTest2.KVS do
     table_stat(:interests)
     table_stat(:interests_inv)
     table_stat(:likes)
+    table_stat(:liked)
+
+    Logger.info(">>> READY")
 
     # отключить логгер
-    # Logger.remove_backend(:console)
+    Logger.remove_backend(:console)
     # Logger.add_backend(:console)
 
     {:noreply, %{now_time: now_time, type: type}}
@@ -158,7 +161,7 @@ defmodule HttpTest2.KVS do
     #     send(port, {self(), :close})
 
     #     time2 = :os.system_time(:millisecond)
-    #     # Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
+    #     Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
 
     #     [exit_status]
     # end)
@@ -237,22 +240,8 @@ defmodule HttpTest2.KVS do
 
         {likes, tail4} = parse_likes(tail3)
 
-        # email = nil
-        # sname = nil
-        # fname = nil
-        # phone = nil
-        # interests = nil
-        likes = nil
-
         # все поля при отдаче в хранилище должны быть в unicode
         # и ответы тоже
-        city = city |> Utils.win1251_to_unicode()
-        country = country |> Utils.win1251_to_unicode()
-
-        email = email |> Utils.win1251_to_unicode()
-        sname = sname |> Utils.win1251_to_unicode()
-        fname = fname |> Utils.win1251_to_unicode()
-        phone = phone |> Utils.win1251_to_unicode()
 
         account = %{
           id: id,
@@ -263,31 +252,11 @@ defmodule HttpTest2.KVS do
           premium_start: premium_start, premium_finish: premium_finish
         }
         account_set_bin(account)
-
-        # # ---------------------------------------------------------
-        # u_email = email |> HttpTest2.Utils.win1251_to_unicode()
-        # u_sname = sname |> HttpTest2.Utils.win1251_to_unicode()
-        # u_fname = fname |> HttpTest2.Utils.win1251_to_unicode()
-        # u_phone = phone |> HttpTest2.Utils.win1251_to_unicode()
-        # u_country = country |> HttpTest2.Utils.win1251_to_unicode()
-        # u_city = city |> HttpTest2.Utils.win1251_to_unicode()
-
-
-        # u_interests = case interests do
-        #   nil -> nil
-        #   interests ->
-        #     Enum.map(interests, fn(win) ->
-        #       HttpTest2.Utils.win1251_to_unicode(win)
-        #     end)
-        # end
-
-        # # Logger.debug ">>>> email=#{inspect u_email} sname=#{inspect u_sname} fname=#{inspect u_fname} phone=#{inspect u_phone} sex=#{inspect sex} birth=#{inspect birth} country=#{inspect u_country} city=#{inspect u_city} joined=#{inspect joined}  status=#{inspect status}  interests=#{inspect u_interests}  premium_start=#{inspect premium_start}  premium_finish=#{inspect premium_finish} likes=#{inspect likes}"
-        # Logger.debug ">>>> id=#{inspect id}  likes=#{inspect likes}"
     
     parse_bin(tail4)
   end
   def parse_str(0, str), do: nil
-  def parse_str(_, str), do: str
+  def parse_str(_, str), do: Utils.win1251_to_unicode(str)
 
   def parse_interests(<<0 :: size(8), tail :: binary >>), do: {nil, tail}
   def parse_interests(<<interests_count :: size(8), tail :: binary >>) do
@@ -302,12 +271,13 @@ defmodule HttpTest2.KVS do
 
   def parse_likes(<<0 :: size(8), tail :: binary >>), do: {nil, tail}
   def parse_likes(<<likes_count :: size(8), tail :: binary >>) do
-    _parse_likes(<<>>, likes_count, tail)
+    _parse_likes([], likes_count, tail)
   end
   defp _parse_likes(arr, 0, tail), do: {arr, tail}
   defp _parse_likes(arr, likes_count, tail) do
     << like :: bytes-size(8), new_tail :: binary >> = tail
-    _parse_likes(like <> arr, likes_count - 1, new_tail)
+    << id :: size(32), ts :: size(32) >> = like
+    _parse_likes([{id, ts}] ++ arr, likes_count - 1, new_tail)
   end
 
 
@@ -366,35 +336,6 @@ defmodule HttpTest2.KVS do
     }
 
     Accounts.set(user[:id], account)
-
-    :ok
-  end
-
-  def account_set(user) do
-    account = {
-      user["id"],
-      Utils.unicode_to_win1251_list(user["email"]),
-      Utils.unicode_to_win1251_list(user["sname"]),
-      Utils.unicode_to_win1251_list(user["fname"]),
-      Utils.unicode_to_win1251_list(user["phone"]),
-      tr_sex(user["sex"]),
-      user["birth"],
-      Countrys.name_to_id(user["country"]),
-      Citys.name_to_id(user["city"]),
-      user["joined"],
-      tr_status(user["status"]),
-      Interests.names_to_ids(user["interests"]),
-      user["premium"]["start"],
-      user["premium"]["finish"],
-      Likes.set(user["id"], user["likes"])
-    }
-
-    # сохранить телефон и почту в trie
-    # исключительно, чтоб потом выявлять уникальность.
-    # _ = Phones.get_id(user["phone"])
-    # _ = Emails.get_id(user["email"])
-
-    Accounts.set(user["id"], account)
 
     :ok
   end

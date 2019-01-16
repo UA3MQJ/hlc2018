@@ -9,6 +9,7 @@
   "flow": {:hex, :flow, "0.14.3", "0d92991fe53035894d24aa8dec10dcfccf0ae00c4ed436ace3efa9813a646902", [:mix], [{:gen_stage, "~> 0.14.0", [hex: :gen_stage, repo: "hexpm", optional: false]}], "hexpm"},
   "gen_stage": {:hex, :gen_stage, "0.14.1", "9d46723fda072d4f4bb31a102560013f7960f5d80ea44dcb96fd6304ed61e7a4", [:mix], [], "hexpm"},
   "jiffy": {:hex, :jiffy, "0.15.2", "de266c390111fd4ea28b9302f0bc3d7472468f3b8e0aceabfbefa26d08cd73b7", [:rebar3], [], "hexpm"},
+  "poison": {:hex, :poison, "2.2.0", "4763b69a8a77bd77d26f477d196428b741261a761257ff1cf92753a0d4d24a63", [:mix], [], "hexpm"},
   "ranch": {:hex, :ranch, "1.7.1", "6b1fab51b49196860b733a49c07604465a47bdb78aa10c1c16a3d199f7f8c881", [:rebar3], [], "hexpm"},
   "retrieval": {:git, "https://github.com/UA3MQJ/retrieval.git", "dde693ad3c05b89901f32aaa71c7907509f275ea", []},
 }

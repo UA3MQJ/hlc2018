@@ -50,8 +50,7 @@ defmodule HttpTest2 do
       # Plug.Adapters.Cowboy.child_spec(:http, Http_test2.Router, [], port: port)
     ]
 
-    # Logger.info(">>> Started application")
-    IO.puts ">>> Started application"
+    Logger.info(">>> Started application")
 
     Supervisor.start_link(children, strategy: :one_for_one)
   end

@@ -52,93 +52,87 @@ defmodule HttpTest2.Filters do
 
     params_is_valid? = !(limit==:error) and (length(err_params_list) == 0)
 
-    result_set = Accounts.get_id_list()
-    fields = %{}
-
-    {result_set, fields} = case params["sex_eq"] do
-      nil -> {result_set, fields}
-      "m" -> {Accounts.get_sex_m(), Map.merge(fields,  %{:sex => :m})}
-      "f" -> {Accounts.get_sex_f(), Map.merge(fields,  %{:sex => :f})}
-    end
     # if !params_is_valid? do
     #   Logger.debug ">>> err_params_list=#{inspect err_params_list}"
     # end
 
     case params_is_valid? do
       true ->
-        id_list = result_set
-        |> MapSet.to_list()
-        |> :lists.sort()
-        |> :lists.reverse()
-
-
-        {result, _} = id_list
-        |> Enum.reduce_while({[], limit}, fn(id, {a_list, a_limit} = acc) ->
-
-          account = Accounts.get(id)
-
-          # if account==nil do
-          #   Logger.debug ">>> id=#{inspect id} account=#{inspect account}"
-          # end
-
-          {^id, email_id, _sname, _fname, _phone_id, _sex,
-             _birth, _country_id, _city_id, _joined, _status,
-             _interests, _premium_start, _premium_finish, _likes} = account
-
-          # проверим запись фильтрами
-          {_, _, result_map, _} = {params, account, %{}, false}
-          # |> sex_eq()
-          |> interests_any()
-          |> interests_contains()
-          |> status_eq()
-          |> status_neq()
-          |> fname_eq()
-          |> fname_any()
-          |> fname_null()
-          |> sname_eq()
-          |> sname_starts()
-          |> sname_null()
-          |> country_eq()
-          |> country_null()
-          |> city_eq()
-          |> city_null()
-          |> city_any()
-          |> phone_code()
-          |> phone_null()
-          |> email_domain()
-          |> email_lt()
-          |> email_gt()
-          |> birth_lt()
-          |> birth_gt()
-          |> birth_year()
-          |> premium_now(now_time)
-          |> premium_null()
-          |> likes_contains()
-
-          case result_map do
-            nil -> {:cont, acc}
-            _ ->
-              email = Utils.numstr_to_str(email_id)
-              # Logger.debug ">>>> result_map=#{inspect result_map}"
-              nresult_map = result_map
-              |> Map.merge(%{id: id})
-              |> Map.merge(%{email: email})
-              |> Map.merge(fields)
-
-              new_limit = a_limit - 1
-              case new_limit do
-                0 -> {:halt, {[nresult_map] ++ a_list, new_limit}}
-                _ -> {:cont, {[nresult_map] ++ a_list, new_limit}}
-              end
-          end
-        end)
-
-        :lists.reverse(result)
+        start_id = :ets.last(:accounts)
+        filter_(params, now_time, [], limit, start_id)
       false ->
         :error
     end
-
   end
+
+  defp filter_(_params, _now_time, a_list, _a_limit, :"$end_of_table") do
+    a_list |> :lists.reverse()
+  end
+  defp filter_(params, now_time, a_list, a_limit, a_id) do
+
+    account = Accounts.get(a_id)
+
+    # if account==nil do
+    #   Logger.debug ">>> id=#{inspect id} account=#{inspect account}"
+    # end
+
+    {^a_id, email_id, _sname, _fname, _phone_id, _sex,
+       _birth, _country_id, _city_id, _joined, _status,
+       _interests, _premium_start, _premium_finish, _likes} = account
+
+    # проверим запись фильтрами
+    {_, _, result_map, _} = {params, account, %{}, false}
+    |> sex_eq()
+    |> interests_any()
+    |> interests_contains()
+    |> status_eq()
+    |> status_neq()
+    |> fname_eq()
+    |> fname_any()
+    |> fname_null()
+    |> sname_eq()
+    |> sname_starts()
+    |> sname_null()
+    |> country_eq()
+    |> country_null()
+    |> city_eq()
+    |> city_null()
+    |> city_any()
+    |> phone_code()
+    |> phone_null()
+    |> email_domain()
+    |> email_lt()
+    |> email_gt()
+    |> birth_lt()
+    |> birth_gt()
+    |> birth_year()
+    |> premium_now(now_time)
+    |> premium_null()
+    |> likes_contains()
+
+    case result_map do
+      nil -> #{:cont, acc}
+        new_a_id = :ets.prev(:accounts, a_id)
+        filter_(params, now_time, a_list, a_limit, new_a_id)
+      _ ->
+        email = Utils.numstr_to_str(email_id)
+        # Logger.debug ">>>> result_map=#{inspect result_map}"
+        nresult_map = result_map
+        |> Map.merge(%{id: a_id})
+        |> Map.merge(%{email: email})
+
+        new_limit = a_limit - 1
+        case new_limit do
+          0 ->
+            [nresult_map] ++ a_list
+            |> :lists.reverse()
+          _ -> 
+            new_a_id = :ets.prev(:accounts, a_id)
+            filter_(params, now_time, [nresult_map] ++ a_list, new_limit, new_a_id)
+        end
+    end
+  end
+
 
   def sex_eq({_, _, _, true} = t), do: t
   def sex_eq({%{"sex_eq" => value} = params, account, map, break}) do
