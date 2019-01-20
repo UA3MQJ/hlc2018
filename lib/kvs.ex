@@ -102,15 +102,16 @@ defmodule HttpTest2.KVS do
     end)
 
     IO.puts "* ETS info *"
-    table_stat(:accounts)
-    table_stat(:citys)
-    table_stat(:citys_inv)
-    table_stat(:countrys)
-    table_stat(:countrys_inv)
-    table_stat(:interests)
-    table_stat(:interests_inv)
-    table_stat(:likes)
-    table_stat(:liked)
+    ets_table_stat(:accounts)
+    ets_table_stat(:citys)
+    ets_table_stat(:citys_inv)
+    ets_table_stat(:countrys)
+    ets_table_stat(:countrys_inv)
+    ets_table_stat(:interests)
+    ets_table_stat(:interests_inv)
+    IO.puts "* Mnesia info *"
+    mnesia_table_stat(:likes)
+    mnesia_table_stat(:liked)
 
     Logger.info(">>> READY")
 
@@ -121,9 +122,15 @@ defmodule HttpTest2.KVS do
     {:noreply, %{now_time: now_time, type: type}}
   end
 
-  defp table_stat(name) do
+  defp ets_table_stat(name) do
     size = :ets.info(name, :memory) * :erlang.system_info(:wordsize)
     rows = :ets.info(name, :size)
+    IO.puts " - table #{inspect name} rows #{inspect rows} size #{inspect size} bytes"
+  end
+
+  defp mnesia_table_stat(name) do
+    size = :mnesia.table_info(name, :memory) * :erlang.system_info(:wordsize)
+    rows = :mnesia.table_info(name, :size)
     IO.puts " - table #{inspect name} rows #{inspect rows} size #{inspect size} bytes"
   end
 
@@ -141,31 +148,31 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    # file_list
-    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    # |> Flow.flat_map(fn(json_file_name) ->
-    #     time1 = :os.system_time(:millisecond)
+    file_list
+    |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    |> Flow.flat_map(fn(json_file_name) ->
+        time1 = :os.system_time(:millisecond)
         
-    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
+        file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-    #     exit_status = receive do
-    #       {^port, {:exit_status, exit_status}} ->
-    #         #Port.close(port)
-    #         # Logger.debug ">>> exit_status 0"
-    #         exit_status
-    #     end
+        exit_status = receive do
+          {^port, {:exit_status, exit_status}} ->
+            #Port.close(port)
+            # Logger.debug ">>> exit_status 0"
+            exit_status
+        end
         
-    #     send(port, {self(), :close})
+        send(port, {self(), :close})
 
-    #     time2 = :os.system_time(:millisecond)
-    #     Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
+        time2 = :os.system_time(:millisecond)
+        Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
 
-    #     [exit_status]
-    # end)
-    # |> Flow.run()
+        [exit_status]
+    end)
+    |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> json->bin convert #{time20 - time10} ms"
