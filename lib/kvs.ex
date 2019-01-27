@@ -62,6 +62,8 @@ defmodule HttpTest2.KVS do
     ets_table_stat(:countrys_inv)
     ets_table_stat(:interests)
     ets_table_stat(:interests_inv)
+    ets_table_stat(:emails)
+    ets_table_stat(:emails_inv)
     ets_table_stat(:groups)
     IO.puts "* Mnesia info *"
     mnesia_table_stat(:accounts)
@@ -72,7 +74,7 @@ defmodule HttpTest2.KVS do
     Logger.info(">>> READY")
 
     # отключить логгер
-    Logger.remove_backend(:console)
+    # Logger.remove_backend(:console)
     # Logger.add_backend(:console)
 
     {:noreply, %{now_time: now_time, type: type}}
@@ -248,7 +250,7 @@ defmodule HttpTest2.KVS do
     case Accounts.get(id) do
       nil -> nil
       account ->
-        {^id, email, sname, fname, phone, sex,
+        {:accounts, ^id, email, sname, fname, phone, sex,
          birth, birth_year, country_id, city_id, joined, joined_year, status,
          interests, premium_start, premium_finish, likes} = account
 
@@ -285,6 +287,8 @@ defmodule HttpTest2.KVS do
     birth_year = Utils.unix_to_year(user[:birth])
     joined_year = Utils.unix_to_year(user[:joined])
     interests_list = Interests.names_to_ids(user[:interests])
+    Emails.name_to_id(user[:email])
+
     account = {
       :accounts,
       user[:id],
@@ -308,19 +312,19 @@ defmodule HttpTest2.KVS do
 
     Accounts.set(user[:id], account)
 
-    # делаем группы
-    # sex, status, interests, country, city в селект
-    # sex, status, interests, country, city, birth, joined. likes - в where
-    case interests_list do
-      nil ->
-        key = {user[:sex], user[:status], nil, country_id, city_id, birth_year, joined_year}
-        :ets.update_counter(:groups, key, {2, 1}, {key, 0})
-      interests_list ->
-        Enum.map(interests_list, fn(interest_id) ->
-          key = {user[:sex], user[:status], interest_id, country_id, city_id, birth_year, joined_year}
-          :ets.update_counter(:groups, key, {2, 1}, {key, 0})
-        end)
-    end
+    # # делаем группы
+    # # sex, status, interests, country, city в селект
+    # # sex, status, interests, country, city, birth, joined. likes - в where
+    # case interests_list do
+    #   nil ->
+    #     key = {user[:sex], user[:status], nil, country_id, city_id, birth_year, joined_year}
+    #     :ets.update_counter(:groups, key, {2, 1}, {key, 0})
+    #   interests_list ->
+    #     Enum.map(interests_list, fn(interest_id) ->
+    #       key = {user[:sex], user[:status], interest_id, country_id, city_id, birth_year, joined_year}
+    #       :ets.update_counter(:groups, key, {2, 1}, {key, 0})
+    #     end)
+    # end
 
     :ok
   end

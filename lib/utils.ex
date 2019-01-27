@@ -30,20 +30,28 @@ defmodule HttpTest2.Utils do
     params_is_valid?(params, fields)
   end
 
-  def new_data_is_valid?(:error, _), do: false
-  def new_data_is_valid?(data, id_list) do
+  def new_data_is_valid?(:error), do: false
+  def new_data_is_valid?(data) do
     # Logger.debug ">>>> data=#{inspect data}"
     cond do
       Map.size(data) == 0 -> false
       true ->
         email_valid = cond do
           data["email"]==nil -> true
-          true -> validate_email(data["email"])==:ok
+          true ->
+            case validate_email(data["email"])==:ok do
+              true ->
+                email = data["email"] |> str_to_numstr()
+                # Logger.debug ">>>> email=#{inspect email}"
+                case :ets.lookup(:emails_inv, email) do
+                  [] -> true
+                  _ -> false
+                end
+              false -> false
+            end
         end
 
         premium_valid = new_premium_is_valid(data["premium"]) == :ok
-        likes_valid = new_likes_is_valid(data["likes"], id_list) == :ok
-        # likes_valid = true
 
         id_is_valid = cond do
           data["id"]==nil -> false
@@ -51,33 +59,42 @@ defmodule HttpTest2.Utils do
         #   true -> !(MapSet.member?(id_list, data["id"]))
           true -> true
         end
-        # id_is_valid = true
 
         # result
-        email_valid and premium_valid and likes_valid and id_is_valid
+        email_valid and id_is_valid and premium_valid 
     end
   end
 
-  def update_data_is_valid?(:error, _, _), do: false
-  def update_data_is_valid?(data, user_id, id_list) do
-    # Logger.debug ">>>> data=#{inspect data}"
+  def update_data_is_valid?(:error, _), do: false
+  def update_data_is_valid?(data, user_id) do
     cond do
       Map.size(data) == 0 -> false
       true ->
         email_valid = cond do
           data["email"]==nil -> true
-          true -> validate_email(data["email"])==:ok
+          true ->
+            case validate_email(data["email"])==:ok do
+              true ->
+                email = data["email"] |> str_to_numstr()
+                # Logger.debug ">>>> email=#{inspect email}"
+                case :ets.lookup(:emails_inv, email) do
+                  [] -> true
+                  _ -> false
+                end
+              false -> false
+            end
+        end
+
+        id_is_valid = case :ets.lookup(:accounts, user_id) do
+          [] -> 
+            false
+          _ -> true
         end
 
         premium_valid = new_premium_is_valid(data["premium"]) == :ok
-        likes_valid = new_likes_is_valid(data["likes"], id_list) == :ok
-        # likes_valid = true
-
-        id_is_valid = (MapSet.member?(id_list, user_id))
-
 
         # result
-        email_valid and premium_valid and likes_valid and id_is_valid
+        email_valid and id_is_valid and premium_valid
     end
   end
 
@@ -192,6 +209,7 @@ defmodule HttpTest2.Utils do
     premium_start = premium["start"]
     premium_finish = premium["finish"]
     result = cond do
+      premium_start == nil and premium_finish == nil -> :ok
       premium_start == nil -> :error
       premium_finish == nil -> :error
       not(is_number(premium_start)) -> :error
@@ -202,32 +220,6 @@ defmodule HttpTest2.Utils do
     result
   end
 
-  def new_likes_is_valid(nil, _id_list), do: :ok
-  def new_likes_is_valid(likes, id_list) do
-    result = likes
-    |> Enum.reduce_while(:ok, fn(like_item, _acc) ->
-      like_id = like_item["id"]
-      like_id_invalid = (MapSet.member?(id_list, like_id))==false
-      if like_id_invalid do
-        Logger.debug ">>>> like_id=#{inspect like_id}"
-      end
-      # like_id_invalid = false
-      ts_invalid = not(is_number(like_item["ts"]))
-      cond do
-        like_id==nil -> {:halt, :error}
-        like_id_invalid -> {:halt, :error}
-        ts_invalid -> {:halt, :error}
-      true ->
-        {:cont, :ok}
-      end
-    end)
-
-    # if result==:error do
-    #   Logger.debug ">>>>>> error likes=#{inspect likes}"
-    # end
-
-    result
-  end
 
   def int_to_list(int), do: int_to_list_(<< int :: size(32) >>)
   defp int_to_list_(<< 0 :: size(8), 0 :: size(8) , 0 :: size(8) , 0 :: size(8) >>), do: []

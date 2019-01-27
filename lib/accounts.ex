@@ -97,7 +97,7 @@ defmodule HttpTest2.Accounts do
 
     {:atomic, :ok} = :mnesia.create_table(:accounts,
       [
-        type: :set,
+        type: :ordered_set,
         attributes: Keyword.keys(accounts(accounts())),
         ram_copies: []
       ]
@@ -142,7 +142,7 @@ defmodule HttpTest2.Accounts do
   end
 
   def get(id) do
-    case :ets.lookup(:accounts, id) do
+    case :mnesia.dirty_read(:accounts, id) do
       [] -> nil
       [account] -> account
     end

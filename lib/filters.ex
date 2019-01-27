@@ -9,27 +9,27 @@ defmodule HttpTest2.Filters do
 
   @no_need_check {nil, nil, nil, true}
 
-  # {^id, email_id, sname, fname, phone_id, sex,
+  # {:accounts, ^id, email_id, sname, fname, phone_id, sex,
   #    birth, country_id, city_id, joined, status,
   #    interests, premium_start, premium_finish, likes} = account
 
-  @id 1
-  @email_id 2
-  @sname 3
-  @fname 4
-  @phone_id 5
-  @sex 6
-  @birth 7
-  @birth_year 8
-  @country_id 9
-  @city_id 10
-  @joined 11
-  @joined_year 12
-  @status 13
-  @interests 14
-  @premium_start 15
-  @premium_finish 16
-  @likes 17
+  @id 2
+  @email_id 3
+  @sname 4
+  @fname 5
+  @phone_id 6
+  @sex 7
+  @birth 8
+  @birth_year 9
+  @country_id 10
+  @city_id 11
+  @joined 12
+  @joined_year 13
+  @status 14
+  @interests 15
+  @premium_start 16
+  @premium_finish 17
+  @likes 18
 
   def filter(params) do
     # Logger.debug ">>>> filter params=#{inspect params}"

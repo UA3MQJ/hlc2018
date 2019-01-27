@@ -4,6 +4,8 @@ defmodule AccountsNewHandler do
   alias HttpTest2.Accounts
 
   def init(req0, opts) do
+    # Logger.debug ">>> AccountsNewHandler"
+
     # IO.puts  ">>> req0=#{inspect req0}"
     # IO.puts  ">>> opts=#{inspect opts}"
     # qs_vals = :cowboy_req.parse_qs(req0)
@@ -26,15 +28,15 @@ defmodule AccountsNewHandler do
         req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
         {:ok, req, opts}
       true ->
-        id_list = Accounts.get_id_list()
-        case Utils.new_data_is_valid?(json_data, id_list) do
+
+        case Utils.new_data_is_valid?(json_data) do
           false ->
             req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
             {:ok, req, opts}
           true ->
-            user_id = json_data["id"]
-            # Logger.debug ">>> new user_id=#{inspect user_id}"
-            Accounts.set_id(user_id)
+            # TODO вставить           
+
+
             req = :cowboy_req.reply(201, %{"content-type" => "application/json"}, "{}", req0)
             {:ok, req, opts}
         end
