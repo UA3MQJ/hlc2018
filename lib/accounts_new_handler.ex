@@ -1,7 +1,7 @@
 defmodule AccountsNewHandler do
   require Logger
   alias HttpTest2.Utils
-  alias HttpTest2.Accounts
+  alias HttpTest2.KVS
 
   def init(req0, opts) do
     # Logger.debug ">>> AccountsNewHandler"
@@ -34,8 +34,7 @@ defmodule AccountsNewHandler do
             req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
             {:ok, req, opts}
           true ->
-            # TODO вставить           
-
+            KVS.account_new(json_data)
 
             req = :cowboy_req.reply(201, %{"content-type" => "application/json"}, "{}", req0)
             {:ok, req, opts}

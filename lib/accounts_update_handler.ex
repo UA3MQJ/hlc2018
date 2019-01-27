@@ -1,6 +1,6 @@
 defmodule AccountsUpdateHandler do
   require Logger
-  # alias HttpTest2.Accounts
+  alias HttpTest2.KVS
   alias HttpTest2.Utils
 
   def init(req0, opts) do
@@ -48,7 +48,7 @@ defmodule AccountsUpdateHandler do
                 req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
                 {:ok, req, opts}
               true ->
-                # TODO обновить 
+                KVS.account_update(user_id, json_data)
 
                 req = :cowboy_req.reply(202, %{"content-type" => "application/json"}, "{}", req0)
                 {:ok, req, opts}

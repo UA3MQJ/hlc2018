@@ -220,6 +220,8 @@ defmodule HttpTest2.Filters do
 
   def status_neq({_, _, _, true} = t), do: t
   def status_neq({%{"status_neq" => value} = params, account, map, break}) do
+    # Logger.debug ">>>> status_neq params=#{inspect params}"
+    # Logger.debug ">>>> status_neq account=#{inspect account}"
     status_neq = case value do
       "свободны" -> 1
       "заняты" -> 2

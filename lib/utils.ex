@@ -60,8 +60,26 @@ defmodule HttpTest2.Utils do
           true -> true
         end
 
+        joined_valid = cond do
+          data["joined"]==nil -> true
+          true -> is_number(data["joined"])
+        end
+
+        birth_valid = cond do
+          data["birth"]==nil -> true
+          true -> is_number(data["birth"])
+        end
+
+        status_valid = cond do
+          data["status"]==nil -> true
+          data["status"]=="свободны" -> true
+          data["status"]=="заняты" -> true
+          data["status"]=="всё сложно" -> true
+          true -> false
+        end
+
         # result
-        email_valid and id_is_valid and premium_valid 
+        email_valid and id_is_valid and premium_valid and joined_valid and birth_valid and status_valid
     end
   end
 
@@ -93,8 +111,26 @@ defmodule HttpTest2.Utils do
 
         premium_valid = new_premium_is_valid(data["premium"]) == :ok
 
+        joined_valid = cond do
+          data["joined"]==nil -> true
+          true -> is_number(data["joined"])
+        end
+
+        birth_valid = cond do
+          data["birth"]==nil -> true
+          true -> is_number(data["birth"])
+        end
+
+        status_valid = cond do
+          data["status"]==nil -> true
+          data["status"]=="свободны" -> true
+          data["status"]=="заняты" -> true
+          data["status"]=="всё сложно" -> true
+          true -> false
+        end
+
         # result
-        email_valid and id_is_valid and premium_valid
+        email_valid and id_is_valid and premium_valid and joined_valid and birth_valid and status_valid
     end
   end
 

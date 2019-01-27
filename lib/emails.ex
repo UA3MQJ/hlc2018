@@ -20,6 +20,16 @@ defmodule HttpTest2.Emails do
     {:ok, {1, Retrieval.new(with_id: true)}}
   end
 
+  def delete(nil),  do: nil
+  def delete(name) do
+    numstr_name = Utils.str_to_numstr(name)
+    case :ets.lookup(:emails_inv, numstr_name) do
+      [] -> :nothing
+      [{_, id}] -> :ets.delete(:emails, id)
+    end
+    :ets.delete(:emails_inv, numstr_name)
+  end
+
   def name_to_id(nil),  do: nil
   def name_to_id(name) do
     numstr_name = Utils.str_to_numstr(name)
