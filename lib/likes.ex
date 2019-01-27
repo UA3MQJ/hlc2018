@@ -39,16 +39,20 @@ defmodule HttpTest2.Likes do
 
   def set(_, nil), do: nil
   def set(user_id, likes) do
-    bin = Enum.reduce(likes, <<>>, fn({id, ts}, acc) ->
-      set_liked_by(id, user_id, ts)
-      << id :: size(32), ts :: size(32) >> <> acc
-    end)
+    # bin = Enum.reduce(likes, <<>>, fn({id, ts}, acc) ->
+    #   # обратный индекс
+    #   # set_liked_by(id, user_id, ts)
+    #   << id :: size(32), ts :: size(32) >> <> acc
+    # end)
 
+    # ets
     # true = :ets.insert(:likes, {user_id, bin})
-    new_likes = likes(id: user_id, bin: bin)
-    {:atomic, res} = :mnesia.transaction(fn() ->
-      :ok = :mnesia.write(new_likes)
-    end)
+
+    #mnesia
+    # new_likes = likes(id: user_id, bin: bin)
+    # {:atomic, res} = :mnesia.transaction(fn() ->
+    #   :ok = :mnesia.write(new_likes)
+    # end)
 
     length(likes)
   end

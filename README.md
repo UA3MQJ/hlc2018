@@ -203,3 +203,6 @@ list = for n <- 1..1000_000, do: n
    Logger.remove_backend(:console)
    Logger.add_backend(:console)
 
+qlc_handle =  Qlc.q("[P || P <- mnesia:table(accounts)]", [])  
+f = fn() -> Qlc.e(qlc_handle) end
+:mnesia.transaction(f)

@@ -276,4 +276,9 @@ defmodule HttpTest2.Utils do
     number_to_str_(new_num, [rem] ++ list)
   end
 
+  def unix_to_year(nil), do: nil
+  def unix_to_year(unixtime) do
+    (unixtime  |> DateTime.from_unix!(:seconds)).year
+  end
+
 end

@@ -20,13 +20,16 @@ defmodule HttpTest2.Filters do
   @phone_id 5
   @sex 6
   @birth 7
-  @country_id 8
-  @city_id 9
-  @interests 12
-  @status 11
-  @premium_start 13
-  @premium_finish 14
-  @likes 15
+  @birth_year 8
+  @country_id 9
+  @city_id 10
+  @joined 11
+  @joined_year 12
+  @status 13
+  @interests 14
+  @premium_start 15
+  @premium_finish 16
+  @likes 17
 
   def filter(params) do
     # Logger.debug ">>>> filter params=#{inspect params}"
@@ -76,10 +79,6 @@ defmodule HttpTest2.Filters do
     #   Logger.debug ">>> id=#{inspect id} account=#{inspect account}"
     # end
 
-    {^a_id, email_id, _sname, _fname, _phone_id, _sex,
-       _birth, _country_id, _city_id, _joined, _status,
-       _interests, _premium_start, _premium_finish, _likes} = account
-
     # проверим запись фильтрами
     {_, _, result_map, _} = {params, account, %{}, false}
     |> sex_eq()
@@ -115,7 +114,7 @@ defmodule HttpTest2.Filters do
         new_a_id = :ets.prev(:accounts, a_id)
         filter_(params, now_time, a_list, a_limit, new_a_id)
       _ ->
-        email = Utils.numstr_to_str(email_id)
+        email = Utils.numstr_to_str(:erlang.element(@email_id, account))
         # Logger.debug ">>>> result_map=#{inspect result_map}"
         nresult_map = result_map
         |> Map.merge(%{id: a_id})

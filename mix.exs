@@ -42,6 +42,7 @@ defmodule HttpTest2.Mixfile do
      {:exprof, "~> 0.2.3"},
      {:elixir_make, "~> 0.4", runtime: false},
      {:retrieval, git: "https://github.com/UA3MQJ/retrieval.git"},
+     {:qlc, "~> 1.0"},
     ]
   end
 end

@@ -1,7 +1,7 @@
 defmodule HttpTest2.KVS do
   use GenServer
   require Logger
-  require Record
+
   alias HttpTest2.Utils
   alias HttpTest2.Citys
   alias HttpTest2.Countrys
@@ -10,53 +10,6 @@ defmodule HttpTest2.KVS do
   alias HttpTest2.Interests
   alias HttpTest2.Likes
   alias HttpTest2.Accounts
-
-  # Record.defrecord :accounts, [
-  #   :id,        # - уникальный внешний идентификатор пользователя. 
-  #               #   Устанавливается тестирующей системой и используется 
-  #               #   затем, для проверки ответов сервера. Тип - 32-разрядное
-  #               #   целое число.
-  #   :email,     # - адрес электронной почты пользователя. 
-  #               #   Тип - unicode-строка длиной до 100 символов. 
-  #               #   Гарантируется уникальность.
-  #   :fname,     # - имя и фамилия соответственно. Тип - unicode-строки 
-  #   :sname,     #   длиной до 50 символов. Поля опциональны и могут 
-  #               #   отсутствовать в конкретной записи.
-  #   :phone,     # - номер мобильного телефона. Тип - unicode-строка длиной 
-  #               #   до 16 символов. Поле является опциональным, но для 
-  #               #   указанных значений гарантируется уникальность.
-  #               #   Заполняется довольно редко.
-  #   :sex,       # - unicode-строка "m" означает мужской пол, а "f" - женский.
-  #   :birth,     # - дата рождения, записанная как число секунд от начала 
-  #               #   UNIX-эпохи по UTC (другими словами - это timestamp). 
-  #               #   Ограничено снизу 01.01.1950 и сверху 01.01.2005-ым.
-  #   :country,   # - страна проживания. Тип - unicode-строка длиной до 50 
-  #               #   символов. Поле опционально.
-  #   :city,      # - город проживания. Тип - unicode-строка длиной до 50 
-  #               #   символов. Поле опционально и указывается редко. 
-  #               #   Каждый город расположен в определённой стране.
-  #   :joined,    # - дата регистрации в системе. Тип - timestamp с 
-  #               #   ограничениями: снизу 01.01.2011, сверху 01.01.2018.
-  #   :status,    # - текущий статус пользователя в системе. Тип - одна строка 
-  #               #   из следующих вариантов: "свободны", "заняты", "всё сложно". 
-  #               #   Не обращайте внимание на странные окончания :)
-  #   :interests, # - интересы пользователя в обычной жизни. 
-  #               #   Тип - массив unicode-строк, возможно пустой. Строки не 
-  #               #   превышают по длине 100 символов.
-  #   :premium_start,   
-  #   :premium_finish,   
-  #               # - начало и конец премиального периода в системе 
-  #               #   (когда пользователям очень хотелось найти "вторую 
-  #               #   половинку" и они делали денежный вклад). В json это поле 
-  #               #   представлено вложенным объектом с полями start и finish, 
-  #               #   где записаны timestamp-ы с нижней границей 01.01.2018.
-  #   :likes      # - массив известных симпатий пользователя, возможно пустой. 
-  #               #   Все симпатии идут вразнобой и каждая представляет собой 
-  #               #   объект из следующих полей:
-  #               #     id - идентификатор другого аккаунта, к которому симпатия. Аккаунт по id в исходных данных всегда существует. В данных может быть несколько лайков с одним и тем же id.
-  #               #     ts - время, то есть timestamp, когда симпатия была записана в систему.
-  # ]
-
 
   def start_link do
       :gen_server.start_link({:local, __MODULE__}, __MODULE__, [], [])
@@ -109,7 +62,10 @@ defmodule HttpTest2.KVS do
     ets_table_stat(:countrys_inv)
     ets_table_stat(:interests)
     ets_table_stat(:interests_inv)
+    ets_table_stat(:groups)
     IO.puts "* Mnesia info *"
+    mnesia_table_stat(:accounts)
+
     mnesia_table_stat(:likes)
     mnesia_table_stat(:liked)
 
@@ -148,31 +104,31 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    file_list
-    |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    |> Flow.flat_map(fn(json_file_name) ->
-        time1 = :os.system_time(:millisecond)
+    # file_list
+    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    # |> Flow.flat_map(fn(json_file_name) ->
+    #     time1 = :os.system_time(:millisecond)
         
-        file_name = String.slice(json_file_name, 0..-5) <> "bin"
+    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-        exit_status = receive do
-          {^port, {:exit_status, exit_status}} ->
-            #Port.close(port)
-            # Logger.debug ">>> exit_status 0"
-            exit_status
-        end
+    #     exit_status = receive do
+    #       {^port, {:exit_status, exit_status}} ->
+    #         #Port.close(port)
+    #         # Logger.debug ">>> exit_status 0"
+    #         exit_status
+    #     end
         
-        send(port, {self(), :close})
+    #     send(port, {self(), :close})
 
-        time2 = :os.system_time(:millisecond)
-        Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
+    #     time2 = :os.system_time(:millisecond)
+    #     Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
 
-        [exit_status]
-    end)
-    |> Flow.run()
+    #     [exit_status]
+    # end)
+    # |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> json->bin convert #{time20 - time10} ms"
@@ -293,7 +249,7 @@ defmodule HttpTest2.KVS do
       nil -> nil
       account ->
         {^id, email, sname, fname, phone, sex,
-         birth, country_id, city_id, joined, status,
+         birth, birth_year, country_id, city_id, joined, joined_year, status,
          interests, premium_start, premium_finish, likes} = account
 
          premium_val = cond do
@@ -308,10 +264,10 @@ defmodule HttpTest2.KVS do
           fname: Utils.numstr_to_str(fname),
           phone: Utils.numstr_to_str(phone),
           sex: sex,
-          birth: birth,
+          birth: birth, birth_year: birth_year,
           country: Countrys.id_to_name(country_id),
           city: Citys.id_to_name(city_id),
-          joined: joined,
+          joined: joined, joined_year: joined_year,
           status: untr_status(status),
           interests: Interests.ids_to_names(interests),
           premium: premium_val,
@@ -324,7 +280,13 @@ defmodule HttpTest2.KVS do
 
   # добавить пользователя без валидации
   def account_set_bin(user) do
+    country_id = Countrys.name_to_id(user[:country])
+    city_id = Citys.name_to_id(user[:city])
+    birth_year = Utils.unix_to_year(user[:birth])
+    joined_year = Utils.unix_to_year(user[:joined])
+    interests_list = Interests.names_to_ids(user[:interests])
     account = {
+      :accounts,
       user[:id],
       Utils.str_to_numstr(user[:email]),
       Utils.str_to_numstr(user[:sname]),
@@ -332,17 +294,33 @@ defmodule HttpTest2.KVS do
       Utils.str_to_numstr(user[:phone]),
       user[:sex],
       user[:birth],
-      Countrys.name_to_id(user[:country]),
-      Citys.name_to_id(user[:city]),
+      birth_year,
+      country_id,
+      city_id,
       user[:joined],
+      joined_year,
       user[:status],
-      Interests.names_to_ids(user[:interests]),
+      interests_list,
       user[:premium_start],
       user[:premium_finish],
       Likes.set(user[:id], user[:likes])
     }
 
     Accounts.set(user[:id], account)
+
+    # делаем группы
+    # sex, status, interests, country, city в селект
+    # sex, status, interests, country, city, birth, joined. likes - в where
+    case interests_list do
+      nil ->
+        key = {user[:sex], user[:status], nil, country_id, city_id, birth_year, joined_year}
+        :ets.update_counter(:groups, key, {2, 1}, {key, 0})
+      interests_list ->
+        Enum.map(interests_list, fn(interest_id) ->
+          key = {user[:sex], user[:status], interest_id, country_id, city_id, birth_year, joined_year}
+          :ets.update_counter(:groups, key, {2, 1}, {key, 0})
+        end)
+    end
 
     :ok
   end
