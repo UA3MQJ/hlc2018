@@ -33,54 +33,8 @@ defmodule HttpTest2.Utils do
   def new_data_is_valid?(:error), do: false
   def new_data_is_valid?(data) do
     # Logger.debug ">>>> data=#{inspect data}"
-    cond do
-      Map.size(data) == 0 -> false
-      true ->
-        email_valid = cond do
-          data["email"]==nil -> true
-          true ->
-            case validate_email(data["email"])==:ok do
-              true ->
-                email = data["email"] |> str_to_numstr()
-                # Logger.debug ">>>> email=#{inspect email}"
-                case :ets.lookup(:emails_inv, email) do
-                  [] -> true
-                  _ -> false
-                end
-              false -> false
-            end
-        end
 
-        premium_valid = new_premium_is_valid(data["premium"]) == :ok
-
-        id_is_valid = cond do
-          data["id"]==nil -> false
-        # на тестовых такого не было
-        #   true -> !(MapSet.member?(id_list, data["id"]))
-          true -> true
-        end
-
-        joined_valid = cond do
-          data["joined"]==nil -> true
-          true -> is_number(data["joined"])
-        end
-
-        birth_valid = cond do
-          data["birth"]==nil -> true
-          true -> is_number(data["birth"])
-        end
-
-        status_valid = cond do
-          data["status"]==nil -> true
-          data["status"]=="свободны" -> true
-          data["status"]=="заняты" -> true
-          data["status"]=="всё сложно" -> true
-          true -> false
-        end
-
-        # result
-        email_valid and id_is_valid and premium_valid and joined_valid and birth_valid and status_valid
-    end
+    true
   end
 
   def update_data_is_valid?(:error, _), do: false

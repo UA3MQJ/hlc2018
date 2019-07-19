@@ -23,7 +23,7 @@ defmodule HttpTest2.KVS do
 
   # delayed init
   def handle_info(:init, _state) do
-    # :observer.start()
+    :observer.start()
     # :timer.sleep(5000)
 
     time1 = :os.system_time(:millisecond)
@@ -42,6 +42,9 @@ defmodule HttpTest2.KVS do
     end
 
     IO.puts ">>> now_time=#{inspect now_time}"
+
+    :ets.new(:constants, [:named_table, :public, :ordered_set, {:keypos, 1}])
+    true = :ets.insert(:constants, {:now_time, now_time})
 
     :erlang.processes()
     |> Enum.map(fn(pid) ->
@@ -74,8 +77,9 @@ defmodule HttpTest2.KVS do
     Logger.info(">>> READY")
 
     # отключить логгер
-    Logger.remove_backend(:console)
+    # Logger.remove_backend(:console)
     # Logger.add_backend(:console)
+
 
     {:noreply, %{now_time: now_time, type: type}}
   end
@@ -106,31 +110,31 @@ defmodule HttpTest2.KVS do
 
     time10 = :os.system_time(:millisecond)
     
-    file_list
-    |> Flow.from_enumerable(stages: 4, max_demand: 1)
-    |> Flow.flat_map(fn(json_file_name) ->
-        time1 = :os.system_time(:millisecond)
+    # file_list
+    # |> Flow.from_enumerable(stages: 4, max_demand: 1)
+    # |> Flow.flat_map(fn(json_file_name) ->
+    #     time1 = :os.system_time(:millisecond)
         
-        file_name = String.slice(json_file_name, 0..-5) <> "bin"
+    #     file_name = String.slice(json_file_name, 0..-5) <> "bin"
 
-        port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
-                         [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
+    #     port = Port.open({:spawn_executable, "./src/json_reader/jsonreader/jsonreader"},
+    #                      [:binary, :stream, :exit_status, args: [json_file_name, file_name]])
 
-        exit_status = receive do
-          {^port, {:exit_status, exit_status}} ->
-            #Port.close(port)
-            # Logger.debug ">>> exit_status 0"
-            exit_status
-        end
+    #     exit_status = receive do
+    #       {^port, {:exit_status, exit_status}} ->
+    #         #Port.close(port)
+    #         # Logger.debug ">>> exit_status 0"
+    #         exit_status
+    #     end
         
-        send(port, {self(), :close})
+    #     send(port, {self(), :close})
 
-        time2 = :os.system_time(:millisecond)
-        # Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
+    #     time2 = :os.system_time(:millisecond)
+    #     # Logger.debug ">>> json->bin json_file_name=#{inspect json_file_name} read #{time2 - time1} ms"
 
-        [exit_status]
-    end)
-    |> Flow.run()
+    #     [exit_status]
+    # end)
+    # |> Flow.run()
     
     time20 = :os.system_time(:millisecond)
     IO.puts ">>> json->bin convert #{time20 - time10} ms"
@@ -329,39 +333,52 @@ defmodule HttpTest2.KVS do
     :ok
   end
 
+  def user_id_is_valid?(id) do
+    result = :mnesia.dirty_read({:accounts, id})
+    result != []
+  end
+
   def account_new(user) do
-    country_id = Countrys.name_to_id(user["country"])
-    city_id = Citys.name_to_id(user["city"])
-    birth_year = Utils.unix_to_year(user["birth"])
-    joined_year = Utils.unix_to_year(user["joined"])
-    interests_list = Interests.names_to_ids(user["interests"])
-    Emails.name_to_id(user["email"])
+    full_valid = user_id_is_valid?(user["id"])
 
-    account = {
-      :accounts,
-      user["id"],
-      Utils.str_to_numstr(user["email"]),
-      Utils.str_to_numstr(user["sname"]),
-      Utils.str_to_numstr(user["fname"]),
-      Utils.str_to_numstr(user["phone"]),
-      tr_sex(user["sex"]),
-      user["birth"],
-      birth_year,
-      country_id,
-      city_id,
-      user["joined"],
-      joined_year,
-      tr_status(user["status"]),
-      interests_list,
-      user["premium"]["start"],
-      user["premium"]["finish"],
-      Likes.set(user["id"], user["likes"])
-    }
+    case !full_valid do
+      true ->
+        country_id = Countrys.name_to_id(user["country"])
+        city_id = Citys.name_to_id(user["city"])
+        birth_year = Utils.unix_to_year(user["birth"])
+        joined_year = Utils.unix_to_year(user["joined"])
+        interests_list = Interests.names_to_ids(user["interests"])
+        Emails.name_to_id(user["email"])
 
-    Accounts.set(user[:id], account)
+        account = {
+          :accounts,
+          user["id"],
+          Utils.str_to_numstr(user["email"]),
+          Utils.str_to_numstr(user["sname"]),
+          Utils.str_to_numstr(user["fname"]),
+          Utils.str_to_numstr(user["phone"]),
+          tr_sex(user["sex"]),
+          user["birth"],
+          birth_year,
+          country_id,
+          city_id,
+          user["joined"],
+          joined_year,
+          tr_status(user["status"]),
+          interests_list,
+          user["premium"]["start"],
+          user["premium"]["finish"],
+          Likes.set(user["id"], user["likes"])
+        }
 
+        Accounts.set(user[:id], account)
 
-    :ok
+        :ok
+      _else ->
+        # Logger.debug ">>>>> invalid user id=" <> inspect(user["id"])
+        :error        
+    end
+
   end
 
   def account_update(id, data) do

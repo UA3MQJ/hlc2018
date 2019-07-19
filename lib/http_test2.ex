@@ -5,7 +5,7 @@ defmodule HttpTest2 do
   use Application
 
   def start(_type, _args) do
-    
+
     import Supervisor.Spec, warn: false
     
     port = Application.get_env(:http_test2, :cowboy_port, 80)
@@ -31,7 +31,7 @@ defmodule HttpTest2 do
 
     {:ok, _} = :cowboy.start_clear(
       :my_http_listener,
-      [{:port, port}, {:num_acceptors, 100}],
+      [{:port, port}, {:num_acceptors, 10000}],
       %{:env => %{:dispatch => dispatch},
         :max_connections => :infinity,
         # :num_acceptors => 5,

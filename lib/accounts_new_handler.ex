@@ -34,10 +34,15 @@ defmodule AccountsNewHandler do
             req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
             {:ok, req, opts}
           true ->
-            KVS.account_new(json_data)
+            case KVS.account_new(json_data) do
+              :ok ->
+                req = :cowboy_req.reply(201, %{"content-type" => "application/json"}, "{}", req0)
+                {:ok, req, opts}
+              _else ->
+                req = :cowboy_req.reply(400, %{"content-type" => "application/json"}, "", req0)
+                {:ok, req, opts}
+            end
 
-            req = :cowboy_req.reply(201, %{"content-type" => "application/json"}, "{}", req0)
-            {:ok, req, opts}
         end
     end
   end

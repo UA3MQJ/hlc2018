@@ -1,4 +1,38 @@
-# elx_small_http_cowboy
+# HLC2018
+
+Highload CUP 2018
+
+Решение на Erlang/Elixir
+
+# Ссылки
+
+Уточнения по поводу groups
+ 
+ https://github.com/MailRuChamps/hlcupdocs/issues/119
+
+Go шный тестер для локального тестирования
+
+ https://github.com/atercattus/highloadcup_tester
+
+Документация
+
+ https://github.com/MailRuChamps/hlcupdocs
+
+ https://highloadcup.ru/ru/round/4/
+
+ https://highloadcup.ru/media/condition/accounts_rules.html
+
+ https://highloadcup.ru/media/condition/tutorial.html
+
+ первый конкурс решения
+ https://github.com/proton/highloadcup17_solutions
+ https://github.com/proton/highloadcup18_solutions
+
+# Записки для себя
+
+смотреть elli
+смотреть ace
+http://crowdhailer.me/2018-01-17/simple-web-services-with-ace/
 
 создать образ
 
@@ -91,6 +125,11 @@ curl --header "Content-Type: application/json"   --reque POST   --data '{"likes"
 curl --header "Content-Type: application/json"   --reque POST   --data '{"likes":[
     {"likee": 3929, "ts": 1464869768, "liker": 3930}
 ]}'   http://localhost:8080/accounts/likes/?query_id=500
+
+
+curl --header "Content-Type: application/json"   --reque POST   --data '{"likes":[
+    {"likee": 3929, "ts": 1464869768, "liker": 3930}
+]}'   http://localhost:8080/accounts/new/hanrahah/?query_id=9424
 
 
 HttpTest2.KVS.account(3929)[:likes]
@@ -206,3 +245,124 @@ list = for n <- 1..1000_000, do: n
 qlc_handle =  Qlc.q("[P || P <- mnesia:table(accounts)]", [])  
 f = fn() -> Qlc.e(qlc_handle) end
 :mnesia.transaction(f)
+
+OpenResty
+
+ https://habr.com/ru/post/321864/
+
+ https://openresty.org/en/linux-packages.html
+
+wget -qO - https://openresty.org/package/pubkey.gpg | sudo apt-key add -
+sudo apt-get -y install software-properties-common
+sudo add-apt-repository -y "deb http://openresty.org/package/ubuntu $(lsb_release -sc) main"
+sudo apt-get update
+sudo apt-get install openresty
+
+apt-get -y install software-properties-common
+add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc) openresty"
+apt-get update
+apt-get install openresty
+
+https://openresty.org/en/getting-started.html
+
+PATH=/usr/local/openresty/nginx/sbin:$PATH
+export PATH
+nginx -p `pwd`/ -c conf/nginx.conf
+nginx -p `pwd`/ -s reload
+curl http://localhost:8000/foo
+curl http://localhost:8000/bar
+
+sudo /usr/local/openresty/nginx/sbin/nginx -p `pwd`/ -c conf/nginx.conf
+sudo /usr/local/openresty/nginx/sbin/nginx -p `pwd`/ -s reload
+
+curl 'http://localhost:8080/accounts/group/?birth=1998&limit=4&order=-1&keys=country'
+curl 'http://localhost:8080/accounts/group/ecsesjegbopefa/?query_id=8748'
+curl 'http://localhost:8080/accounts/new/hanrahah/?query_id=9424'
+curl 'http://localhost:8080/accounts/likes/nuteolyptehlortowet/tihohsiemlitas/?query_id=8569'
+curl 'http://localhost:8080/accounts/filter/toaslinad/?query_id=7528'
+
+curl --header "Content-Type: application/json"   --reque POST   --data '{"likes":[]}'   http://localhost:8080/accounts/likes/?query_id=500
+
+
+sudo opm get pintsized/lua-resty-http
+sudo opm list
+https://github.com/ledgetech/lua-resty-http
+
+
+пересечение двух множеств делается просто: i = 0, j = 0, if set[i] < set[j] then i++ else j++;
+
+наброски по groups
+
+sex, status, interests, country, city в селект
+sex, status, interests, country, city, birth, joined. likes - в where
+
+подсчет count
+но группировать по полям из select
+при этом выбранное поле может быть nil, и его не выводить
+
+GET: /accounts/group/?birth=1998&limit=4&order=-1&keys=country
+
+{"groups": [
+    {"country": "Малатрис", "count": 8745},
+    {"country": "Алания", "count": 4390},
+    {"country": "Финляндия", "count": 2100},
+    {"country": "Гератрис", "count": 547}
+]}
+
+select country, count(*)
+from ...
+where birth=1998
+
+list = :ets.match(:groups, {{:_, :_, :_, :'$1', :_, 1986, :_}, :'$2'})
+
+Enum.reduce(list, %{}, fn([city, count], acc) -> \
+Map.update(acc, city, count, &(&1 + count))\
+end)\
+|> Enum.sort(fn({_, c1}, {_, c2}) -> c1 > c2 end)\
+|> Enum.slice(0, 10)
+
+
+https://jsonformatter.org/
+accounts/group/?keys=country%2Cstatus&interests=Мотоспорт&order=-1&query_id=2277&limit=5
+{"groups":[
+{"count":88,"status":"свободны"},
+{"count":51,"status":"заняты"},
+{"count":30,"status":"всё сложно"},
+{"count":24,"country":"Малания","status":"свободны"},
+{"count":17,"country":"Росляндия","status":"свободны"}
+]}
+
+select country, status
+from ...
+where interests=мотоспорт
+
+:ets.update_counter(:groups, {:m}, {2, 1}, {{:m}, 0})
+
+вместе с groups
+flow read 119s
+all read  518s
+
+:total 1033mb
+:accounts  - 1300000 - 392mb
+:groups    - 2727474 - 349mb
+
+выборка - 0.8 секунд, суммирование 2с
+
+80 место    Алексей Большаков (Erlang/Elixir)  149090.12515  61.0% 2019-01-27
+100 место   Алексей Большаков (Erlang/Elixir) 279283.26008  22.7%
+УРА!!!! я в рейтинге! 22.7%
+101/141 место   Алексей Большаков (Erlang/Elixir) 279283.26008  22.7%
+
+numstr
+accounts 107727kb
+total упал со 170000к до 100000к !!!
+accounts 35295kb
+
+запуск по полному объему
+130 json файлов 
+json-bin в четыре параллельных обработчика - на файл в среднем 12с/файл
+загрузка в ерланг из bin файла в четыре обработчика - в среднем 2.5с/файл
+общее время чтение бинарей ерлангом по полному объему - 86с
+всё вместе с преобразованием json-bin и чтением 505 секунд
+
+
